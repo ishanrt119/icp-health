@@ -1,0 +1,38 @@
+{
+  "canisters": {
+    "icp-health-backend": {
+      "candid": "src/icp-health-backend/icp-health-backend.did",
+      "package": "icp-health-backend",
+      "type": "rust"
+    },
+    "icp-health-frontend": {
+      "dependencies": [
+        "icp-health-backend"
+      ],
+      "source": [
+        "src/icp-health-frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "icp-health-frontend"
+    },
+    "internet_identity": {
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "frontend": {},
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "type": "custom",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
