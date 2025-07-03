@@ -1,0 +1,256 @@
+/* Grey Container Box */
+.dashboard-greybox {
+  background-color: #f0f0f0;
+  padding: 60px 64px; /* Increased vertical and horizontal padding */
+  border-radius: 24px;
+  margin-top: 30px;
+  width: 100%;
+  max-width: 1440px; /* Wider grey box */
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 0 20px rgba(0,0,0,0.05);
+}
+
+/* Horizontal Stat Cards */
+.stat-card-row.horizontal {
+  display: flex;
+  gap: 32px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+
+/* Individual Stat Card */
+.stat-card {
+  background: white;
+  padding: 40px 32px;
+  border-radius: 20px;
+  flex: 1;
+  min-width: 280px;
+  min-height: 200px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Icon inside Stat Card */
+.stat-icon {
+  margin-bottom: 12px;
+  width: 36px;
+  height: 36px;
+}
+
+.stat-icon.green { color: #28a745; }
+.stat-icon.yellow { color: #ffc107; }
+.stat-icon.blue { color: #007bff; }
+
+/* Upload Section */
+.upload-form-section {
+  background-color: #ffffff;
+  padding: 40px 32px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Input Row */
+.upload-input-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+/* Input Fields */
+.upload-input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.upload-input {
+  padding: 12px 14px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 14px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+/* Upload Box */
+.upload-box {
+  border: 2px dashed #888;
+  border-radius: 14px;
+  padding: 50px;
+  text-align: center;
+  background-color: #f9f9f9;
+  position: relative;
+  cursor: pointer;
+  margin-bottom: 24px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.upload-box.active {
+  background-color: #eef6ff;
+  border-color: #007bff;
+}
+
+.upload-box input[type="file"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.upload-icon {
+  margin-bottom: 12px;
+  color: #007bff;
+}
+
+/* Uploaded Files Preview */
+.uploaded-files {
+  margin-top: 12px;
+}
+
+.uploaded-file {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f4f4f4;
+  border-radius: 10px;
+  padding: 12px 18px;
+  margin-top: 10px;
+  font-size: 15px;
+}
+
+/* File Info with Icon */
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.file-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.file-icon.red { color: #dc3545; }
+.file-icon.blue { color: #0d6efd; }
+.file-icon.green { color: #198754; }
+.file-icon.gray { color: #6c757d; }
+
+/* Remove Button */
+.remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #dc3545;
+  padding: 6px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.remove-btn:hover {
+  background: #ffecec;
+}
+
+/* Upload Button Centered */
+.upload-submit-btn {
+  display: block;
+  margin: 24px auto 0 auto;
+  padding: 12px 32px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.upload-submit-btn:hover {
+  background-color: #0056b3;
+}
+
+/* Doctor Search Section in Upload */
+.doctor-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.doctor-search-bar input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.doctor-search-bar button {
+  background: #007bff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+}
+
+.doctor-results {
+  margin-top: 10px;
+}
+
+.doctor-card {
+  padding: 10px 14px;
+  background: #f4f4f4;
+  border-radius: 10px;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.doctor-card:hover {
+  background: #e0e0e0;
+}
+
+.doctor-card.selected {
+  background: #d1e7ff;
+  border: 1px solid #007bff;
+}
+
+.no-result {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #888;
+}
+
+.selected-doctor {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #007bff;
+}
+
+.patient-dashboard-page {
+  background-color: #f3f4f6;
+  padding: 40px 20px;
+  min-height: 100vh;
+}
+
+.dashboard-card {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}

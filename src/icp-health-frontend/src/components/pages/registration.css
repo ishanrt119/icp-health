@@ -1,0 +1,54 @@
+.registration-container {
+  min-height: 100vh;
+  background: #f3f4f6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+.registration-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 400px;
+}
+.registration-card h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+.registration-card label {
+  display: block;
+  margin-top: 1rem;
+  color: #374151;
+  font-weight: 500;
+}
+.registration-card input {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  margin-top: 0.25rem;
+}
+.registration-card button {
+  margin-top: 1.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #2563eb;
+  color: white;
+  font-weight: bold;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+}
+.registration-card button:hover {
+  background-color: #1d4ed8;
+}
+.back-button {
+  background: none;
+  color: #6b7280;
+  text-decoration: underline;
+  margin-top: 1rem;
+}

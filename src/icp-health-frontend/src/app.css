@@ -1,0 +1,162 @@
+/* App.css */
+
+/* Reset & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9fafb;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Buttons */
+button {
+  padding: 10px 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button.primary {
+  background-color: #2563eb; /* blue */
+  color: white;
+}
+
+button.primary:hover {
+  background-color: #1e40af;
+}
+
+button.secondary {
+  background-color: #e2e8f0; /* light gray */
+  color: #333;
+}
+
+button.secondary:hover {
+  background-color: #cbd5e1;
+}
+
+/* Form Elements */
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+input:focus, select:focus {
+  border-color: #2563eb;
+  outline: none;
+}
+
+/* Cards */
+.card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+table th, table td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+table tr:hover {
+  background-color: #f1f5f9;
+}
+
+/* Badge / Status Pills */
+.status {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.status.green {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status.yellow {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status.red {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* Avatar Initials */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #dbeafe;
+  color: #1e3a8a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* Sections */
+.section {
+  margin-bottom: 40px;
+}
+
+/* Headings */
+h1, h2, h3 {
+  font-weight: bold;
+  color: #111827;
+  margin-bottom: 10px;
+}
+
+p {
+  margin-bottom: 10px;
+  color: #4b5563;
+}
+
+/* app.css */
+
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f8fafc;
+}
+
+.main-content {
+  flex: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}

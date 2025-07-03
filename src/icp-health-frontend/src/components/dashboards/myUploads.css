@@ -1,0 +1,68 @@
+.uploads-table-wrapper {
+  margin: 40px auto;
+  max-width: 1000px;
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  min-height: 400px; /* ✅ Add this line */
+  display: flex;         /* ✅ Center the content vertically if empty */
+  flex-direction: column;
+  justify-content: center;
+}
+
+.uploads-table-wrapper h3 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #1f2937;
+}
+
+.uploads-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.no-data-text {
+  text-align: center;
+  color: #6b7280;
+  padding: 40px 0;
+  font-size: 1rem;
+}
+
+.no-data-text,
+.loading-text,
+.error-text {
+  font-size: 1rem;
+  text-align: center;
+  margin-top: 20px;
+  color: #6b7280; /* Tailwind gray-500 */
+}
+
+.uploads-table th,
+.uploads-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.95rem;
+}
+
+.uploads-table th {
+  background-color: #f9fafb;
+  color: #374151;
+  font-weight: 600;
+}
+
+.download-btn {
+  padding: 6px 12px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.download-btn:hover {
+  background-color: #2563eb;
+}

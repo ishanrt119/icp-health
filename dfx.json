@@ -1,9 +1,9 @@
 {
   "canisters": {
     "icp-health-backend": {
-      "candid": "src/icp-health-backend/icp-health-backend.did",
       "package": "icp-health-backend",
-      "type": "rust"
+      "type": "rust",
+      "candid": "src/icp-health-backend/icp-health-backend.did"
     },
     "icp-health-frontend": {
       "dependencies": [

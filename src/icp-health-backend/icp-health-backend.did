@@ -1,3 +1,99 @@
 service : {
-    "greet": (text) -> (text) query;
-}
+  // User registration & role handling
+  register_user: (text, text, text) -> (variant { ok : null; err : text });
+  check_user_exists: () -> (bool) query;
+  get_user: () -> (
+    record {
+      name : text;
+      email : text;
+      role : text;
+    }
+  ) query;
+
+  // Upload & document handling
+  upload_document: (
+    text, // file_name
+    text, // doc_type
+    text, // subtype
+    text, // file_content (base64)
+    text  // doctor_name
+  ) -> (
+    variant {
+      ok : record {
+        index : nat64;
+        timestamp : nat64;
+        file_name : text;
+        doc_type : text;
+        subtype : text;
+        file_content : text;
+        doctor_name : text;
+        earning_icp : nat64;
+        hash : text;
+        previous_hash : text;
+        patient_name : text; 
+      };
+      err : text;
+    }
+  );
+
+  get_my_uploads: () -> (
+    vec record {
+      index : nat64;
+      timestamp : nat64;
+      file_name : text;
+      doc_type : text;
+      subtype : text;
+      file_content : text;
+      doctor_name : text;
+      earning_icp : nat64;
+      hash : text;
+      previous_hash : text;
+      patient_name : text; 
+    }
+  ) query;
+
+  delete_upload: (text) -> (
+    variant { ok : null; err : text }
+  );
+
+  search_uploads_by_filter: (text, text) -> (
+    vec record {
+      index : nat64;
+      timestamp : nat64;
+      file_name : text;
+      doc_type : text;
+      subtype : text;
+      file_content : text;
+      doctor_name : text;
+      earning_icp : nat64;
+      hash : text;
+      previous_hash : text;
+      patient_name : text; 
+    }
+  ) query;
+
+  // Doctor-specific methods
+  get_all_doctors: () -> (
+    vec record {
+      name : text;
+      email : text;
+      role : text;
+    }
+  ) query;
+
+  get_uploads_for_doctor: () -> (
+    vec record {
+      index : nat64;
+      timestamp : nat64;
+      file_name : text;
+      doc_type : text;
+      subtype : text;
+      file_content : text;
+      doctor_name : text;
+      earning_icp : nat64;
+      hash : text;
+      previous_hash : text;
+      patient_name : text; 
+    }
+  ) query;
+};

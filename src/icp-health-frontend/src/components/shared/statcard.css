@@ -1,0 +1,65 @@
+/* statcard.css */
+.stat-card {
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb; /* Tailwind's gray-200 */
+  padding: 1.5rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card h3 {
+  font-size: 0.875rem;
+  color: #6b7280; /* Tailwind's gray-600 */
+  font-weight: 500;
+}
+
+.stat-card .value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827; /* Tailwind's gray-900 */
+  margin-top: 0.25rem;
+}
+
+.stat-card .trend {
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.stat-card .icon-wrapper {
+  padding: 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-blue {
+  background: linear-gradient(135deg, #e0f2fe, #bfdbfe);
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.icon-green {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  border-color: #86efac;
+  color: #15803d;
+}
+
+.icon-purple {
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  border-color: #c4b5fd;
+  color: #7e22ce;
+}
+
+.icon-yellow {
+  background: linear-gradient(135deg, #fef9c3, #fef08a);
+  border-color: #fde047;
+  color: #a16207;
+}
