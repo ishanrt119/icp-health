@@ -11,7 +11,7 @@ const LoginPage = ({ onLogin }) => {
     const authClient = await AuthClient.create(); // ✅ use this instead of window.authClient
 
     await authClient.login({
-      identityProvider: "http://uzt4z-lp777-77774-qaabq-cai.localhost:4943/#authorize",
+      identityProvider: " http://uzt4z-lp777-77774-qaabq-cai.localhost:4943/#authorize",
       onSuccess: async () => {
         const identity = authClient.getIdentity();
         const principal = identity.getPrincipal().toText();

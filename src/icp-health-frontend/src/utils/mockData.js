@@ -21,6 +21,40 @@ export const users = [
   }
 ];
 
+export const mockPolicies = [
+  {
+    name: "Cardio Secure Plan",
+    description: "Coverage for cardiac-related treatments and surgeries.",
+    company: "HealthShield Pvt Ltd",
+    keywords: ["cardio", "heart", "surgery"]
+  },
+  {
+    name: "Diabetes Wellness Plan",
+    description: "Covers regular checkups and medication for diabetes.",
+    company: "CareWell Health",
+    keywords: ["diabetes", "wellness", "medication"]
+  },
+  {
+    name: "Comprehensive Family Cover",
+    description: "Full family coverage with maternity and emergency care.",
+    company: "LifeSure Insurance",
+    keywords: ["family", "maternity", "emergency"]
+  },
+  {
+    name: "Cancer Care Plus",
+    description: "Dedicated insurance for cancer treatment and therapy.",
+    company: "OncoCare Insure",
+    keywords: ["cancer", "therapy", "radiation"]
+  },
+  {
+    name: "Senior Citizen Secure",
+    description: "Policy for 60+ age group with chronic illness cover.",
+    company: "GoldenYears Healthcare",
+    keywords: ["senior", "chronic", "age"]
+  }
+];
+
+
 export const healthRecords = [
   {
     id: '1',

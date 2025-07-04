@@ -7,7 +7,7 @@ const Header = ({
   onUserSwitch,
   onBackToLanding,
   onMyUploadsClick,
-  onNewResearchClick // ✅ NEW PROP
+  onNewResearchClick
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -43,6 +43,13 @@ const Header = ({
     setDropdownOpen((prev) => !prev);
   };
 
+  // Get display name - prioritize name, fallback to email, then role
+  const getDisplayName = () => {
+    if (currentUser.name) return currentUser.name;
+    if (currentUser.email) return currentUser.email;
+    return `${getRoleName(currentUser.role)} User`;
+  };
+
   return (
     <header className="header">
       {/* Left: Logo */}
@@ -76,8 +83,6 @@ const Header = ({
           </div>
         )}
 
-       
-
         <Bell className="action-icon" size={18} />
         <Settings className="action-icon" size={18} />
 
@@ -91,10 +96,18 @@ const Header = ({
 
           {dropdownOpen && (
             <div className="dropdown-menu">
-              <div>
+              <div className="profile-section">
                 <h4>My Profile</h4>
-                <p><strong>Name:</strong> {currentUser.name || 'N/A'}</p>
-                <p><strong>Role:</strong> {getRoleName(currentUser.role)}</p>
+                <div className="profile-details">
+                  <p><strong>Name:</strong> {getDisplayName()}</p>
+                  <p><strong>Role:</strong> {getRoleName(currentUser.role)}</p>
+                  {currentUser.email && (
+                    <p><strong>Email:</strong> {currentUser.email}</p>
+                  )}
+                  {currentUser.id && (
+                    <p><strong>ID:</strong> {currentUser.id}</p>
+                  )}
+                </div>
               </div>
               <hr />
               <button className="logout-btn" onClick={onBackToLanding}>

@@ -28,6 +28,37 @@ const PatientDashboard = ({ viewMode = 'dashboard', onBackToDashboard }) => {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [totalEarnings, setTotalEarnings] = useState(0);
 
+  const [schemeSearch, setSchemeSearch] = useState('');
+const [selectedScheme, setSelectedScheme] = useState(null);
+const [applicantName, setApplicantName] = useState('');
+const [applicantEmail, setApplicantEmail] = useState('');
+const [applicantAddress, setApplicantAddress] = useState('');
+const [schemeApplied, setSchemeApplied] = useState(false);
+const [showAllSchemes, setShowAllSchemes] = useState(false);
+const [showSchemeModal, setShowSchemeModal] = useState(false);
+
+
+const schemes = [
+  { name: "Diabetes Support Grant", description: "Financial aid for diabetic patients.", tags: ["diabetes"] },
+  { name: "Heart Care Scheme", description: "Cardiac treatment and rehab support.", tags: ["heart"] },
+  { name: "Cancer Aid Fund", description: "Support for cancer treatment and chemo.", tags: ["cancer"] },
+  { name: "Kidney Dialysis Plan", description: "Subsidy for regular dialysis.", tags: ["kidney"] },
+  { name: "Mental Wellness Initiative", description: "Psychological help & therapy aid.", tags: ["mental", "depression"] },
+  { name: "Senior Wellness Scheme", description: "Health support for senior citizens.", tags: ["elderly", "age"] },
+  { name: "Asthma Relief Aid", description: "Assistance for asthma patients.", tags: ["asthma"] },
+  { name: "Rare Disease Coverage", description: "Funding for rare illnesses.", tags: ["rare"] },
+  { name: "Thyroid Control Scheme", description: "Support for thyroid checkups & meds.", tags: ["thyroid"] },
+  { name: "Post Surgery Recovery", description: "Rehabilitation after major surgeries.", tags: ["surgery"] }
+];
+
+const filteredSchemes = schemes.filter(scheme =>
+  schemeSearch === '' ||
+  scheme.name.toLowerCase().includes(schemeSearch.toLowerCase()) ||
+  scheme.description.toLowerCase().includes(schemeSearch.toLowerCase()) ||
+  scheme.tags.some(tag => tag.toLowerCase().includes(schemeSearch.toLowerCase()))
+);
+
+
   const MAX_FILE_SIZE_MB = 1.9;
 
  useEffect(() => {
@@ -38,7 +69,7 @@ const PatientDashboard = ({ viewMode = 'dashboard', onBackToDashboard }) => {
 
       const agent = new HttpAgent({ identity });
 
-      // ⚠️ Only fetch root key in development
+      // ⚠ Only fetch root key in development
       if (window.location.hostname === 'localhost') {
         await agent.fetchRootKey();
       }
@@ -155,6 +186,22 @@ console.log("All Doctors:", allDoctors);
   });
 };
 
+const handleSchemeApply = () => {
+  if (!applicantName || !applicantEmail || !applicantAddress) {
+    alert("Please fill in all fields.");
+    return;
+  }
+
+  setSchemeApplied(true);
+  setSelectedScheme(null);
+  setApplicantName('');
+  setApplicantEmail('');
+  setApplicantAddress('');
+
+  setTimeout(() => setSchemeApplied(false), 3000);
+};
+
+
 
   const handleSubmit = async () => {
   if (!uploadedFiles.length || !category || !keywords || !selectedDoctor) {
@@ -190,7 +237,7 @@ console.log("All Doctors:", allDoctors);
         const base64Content = await fileToBase64(file);
 
         if (!base64Content || typeof base64Content !== "string") {
-          console.warn(`⚠️ Skipping ${file.name}: Invalid base64 content.`);
+          console.warn(`⚠ Skipping ${file.name}: Invalid base64 content.`);
           continue;
         }
 
@@ -208,10 +255,10 @@ console.log("All Doctors:", allDoctors);
           console.log(`✅ Uploaded: ${file.name}, hash: ${res.ok.hash}`);
           successCount++;
         } else {
-          console.warn(`❌ Upload failed for ${file.name}:`, res.err || res);
+          console.warn(`❌ Upload failed for ${file.name}:, res.err || res`);
         }
       } catch (uploadErr) {
-        console.error(`Error uploading ${file.name}:`, uploadErr);
+        console.error(`Error uploading ${file.name}:, uploadErr`);
       }
     }
 
@@ -359,9 +406,108 @@ console.log("All Doctors:", allDoctors);
           </div>
 
           <button className="upload-submit-btn" onClick={handleSubmit}>Upload</button>
+
+       {/* === Search Scheme Section === */}
+<div className="select-scheme-box">
+  <div className="scheme-title-row">
+    <h3>Search Scheme</h3>
+    <button className="see-all-btn" onClick={() => {
+      setSchemeSearch('');
+      setShowAllSchemes(true);
+    }}>See All</button>
+  </div>
+
+  <input
+    className="scheme-search-input"
+    type="text"
+    placeholder="Search schemes by illness or keyword..."
+    value={schemeSearch}
+    onChange={(e) => {
+      setSchemeSearch(e.target.value);
+      setShowAllSchemes(false);
+      setSchemeApplied(false);
+    }}
+  />
+
+  {(schemeSearch || showAllSchemes) && (
+    <div className="scheme-list">
+      {filteredSchemes.map((scheme, index) => (
+        <div key={index} className="scheme-details-card">
+          <p><strong>{index + 1}. {scheme.name}</strong></p>
+          <p>{scheme.description}</p>
+          <button
+            className="apply-btn"
+            onClick={() => {
+              setSelectedScheme(scheme);
+              setShowSchemeModal(true);
+            }}
+          >
+            Apply
+          </button>
+        </div>
+      ))}
+      {filteredSchemes.length === 0 && (
+        <p className="no-result">No schemes found for "{schemeSearch}"</p>
+      )}
+    </div>
+  )}
+
+  {/* Modal Popup */}
+  {showSchemeModal && selectedScheme && (
+    <div className="scheme-modal-overlay">
+      <div className="scheme-modal">
+        <button className="close-btn" onClick={() => setShowSchemeModal(false)}>×</button>
+        <h4>Apply for: {selectedScheme.name}</h4>
+
+        {!schemeApplied ? (
+          <>
+            <input
+              type="text"
+              placeholder="Your Name"
+              value={applicantName}
+              onChange={(e) => setApplicantName(e.target.value)}
+            />
+            <input
+              type="email"
+              placeholder="Your Email"
+              value={applicantEmail}
+              onChange={(e) => setApplicantEmail(e.target.value)}
+            />
+            <textarea
+              placeholder="Your Address"
+              value={applicantAddress}
+              onChange={(e) => setApplicantAddress(e.target.value)}
+            ></textarea>
+            <button className="submit-btn" onClick={() => {
+              if (!applicantName || !applicantEmail || !applicantAddress) {
+                alert("Please fill in all fields.");
+                return;
+              }
+              setSchemeApplied(true);
+              setTimeout(() => {
+                setShowSchemeModal(false);
+                setSchemeApplied(false);
+                setApplicantName('');
+                setApplicantEmail('');
+                setApplicantAddress('');
+              }, 2500);
+            }}>
+              Submit
+            </button>
+          </>
+        ) : (
+          <p className="success-message">✅ Applied successfully!</p>
+        )}
+      </div>
+    </div>
+  )}
+</div>
+
         </div>
       </div>
     </div>
+
+    
   );
 };
 

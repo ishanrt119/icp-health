@@ -1,35 +1,101 @@
-// ResearcherDashboard.jsx
 import React, { useState, useEffect } from 'react';
-import './researcher.css';
-import {
-  Database, Users, TrendingUp, Award,
-  Download, Plus
+import { 
+  Database, 
+  Users, 
+  TrendingUp, 
+  Award,
+  Search,
+  Filter,
+  Download,
+  Play,
+  UserPlus,
+  BarChart3,
+  Globe,
+  Plus,
+  Calendar,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  FileText,
+  Brain,
+  Target,
+  Zap,
+  Eye,
+  Settings,
+  Share2,
+  BookOpen,
+  PieChart,
+  Activity,
+  Microscope,
+  X,
+  ChevronDown,
+  ChevronRight,
+  Star,
+  MessageSquare,
+  Bell,
+  Bookmark,
+  Send,
+  UserCheck,
+  Building,
+  Mail
 } from 'lucide-react';
 import StatCard from '../shared/StatCard';
-import { researchStudies, healthRecords, users, dataRequests, researcherDataRequests } from '../../utils/mockData';
-import Modal from '../shared/Modal';
+import { researchStudies, healthRecords, researcherDataRequests } from '../../utils/mockData';
+import './researcher.css';  
 
 const ResearcherDashboard = () => {
+  const [activeTab, setActiveTab] = useState('overview');
   const [modal, setModal] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedSources, setSelectedSources] = useState([]);
   const [compensation, setCompensation] = useState('');
+  const [filters, setFilters] = useState({
+    ageRange: '',
+    gender: '',
+    condition: '',
+    dateRange: '',
+    dataQuality: ''
+  });
+  const [expandedStudy, setExpandedStudy] = useState(null);
+  const [notifications, setNotifications] = useState([
+    { id: 1, type: 'success', message: 'New cardiovascular dataset available', time: '2 hours ago' },
+    { id: 2, type: 'info', message: 'Study "Diabetes Prevention" reached 80% completion', time: '4 hours ago' },
+    { id: 3, type: 'warning', message: 'Data request approval pending for 3 days', time: '1 day ago' }
+  ]);
 
+  // Collaboration state
+  const [collaborationForm, setCollaborationForm] = useState({
+    institution: '',
+    contactEmail: '',
+    studyTitle: '',
+    message: '',
+    dataTypes: []
+  });
+
+  // Advanced search with filters
   useEffect(() => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      const results = healthRecords.filter(rec =>
+      let results = healthRecords.filter(rec =>
         rec.title.toLowerCase().includes(query) ||
         rec.provider.toLowerCase().includes(query) ||
         rec.description.toLowerCase().includes(query) ||
         rec.type.toLowerCase().includes(query)
       );
+
+      // Apply filters
+      if (filters.condition) {
+        results = results.filter(rec => 
+          rec.description.toLowerCase().includes(filters.condition.toLowerCase())
+        );
+      }
+      
       setSearchResults(results);
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery]);
+  }, [searchQuery, filters]);
 
   const toggleSourceSelection = (id) => {
     setSelectedSources(prev =>
@@ -38,149 +104,881 @@ const ResearcherDashboard = () => {
   };
 
   const handleSubmitRequest = () => {
-    if (!compensation || selectedSources.length === 0) return alert('Fill all fields');
+    if (!compensation || selectedSources.length === 0) {
+      alert('Please fill all required fields');
+      return;
+    }
+    
     const newRequest = {
       id: Date.now().toString(),
       requesterName: 'Current Researcher',
       requesterType: 'researcher',
-      dataSourcesRequested: selectedSources.map(id => healthRecords.find(r => r.id === id).title),
+      dataSourcesRequested: selectedSources.map(id => 
+        healthRecords.find(r => r.id === id)?.title || 'Unknown'
+      ),
       dataSourcesReceived: [],
       status: 'pending',
       compensation,
       date: new Date().toISOString().split('T')[0]
     };
+    
     console.log('Submitting request:', newRequest);
-    alert('Request submitted!');
+    alert('Data request submitted successfully!');
     setModal(null);
+    resetSearchForm();
+  };
+
+  const resetSearchForm = () => {
     setSearchQuery('');
     setSearchResults([]);
     setSelectedSources([]);
     setCompensation('');
+    setFilters({
+      ageRange: '',
+      gender: '',
+      condition: '',
+      dateRange: '',
+      dataQuality: ''
+    });
   };
 
+  const handleCollaborationSubmit = () => {
+    if (!collaborationForm.institution || !collaborationForm.contactEmail || !collaborationForm.studyTitle) {
+      alert('Please fill all required fields');
+      return;
+    }
+    
+    console.log('Submitting collaboration request:', collaborationForm);
+    alert('Collaboration request sent successfully! We will contact you within 2-3 business days.');
+    setModal(null);
+    setCollaborationForm({
+      institution: '',
+      contactEmail: '',
+      studyTitle: '',
+      message: '',
+      dataTypes: []
+    });
+  };
+
+  const toggleDataType = (dataType) => {
+    setCollaborationForm(prev => ({
+      ...prev,
+      dataTypes: prev.dataTypes.includes(dataType)
+        ? prev.dataTypes.filter(type => type !== dataType)
+        : [...prev.dataTypes, dataType]
+    }));
+  };
+
+  // Mock data for advanced features
   const activeStudies = researchStudies.filter(s => s.status === 'active').length;
   const totalParticipants = researchStudies.reduce((sum, s) => sum + s.participants, 0);
   const recruitingStudies = researchStudies.filter(s => s.status === 'recruiting').length;
 
-  return (
-    <div className="space-y-6 researcher-dashboard">
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 text-white">
-        <h2 className="text-2xl font-bold mb-2">Research Analytics Portal</h2>
-        <p className="opacity-90">Access anonymized health data for groundbreaking medical research.</p>
+  const analyticsData = [
+    { category: 'Cardiovascular', patients: 1250, avgAge: 52, completion: 78, quality: 'High' },
+    { category: 'Diabetes', patients: 800, avgAge: 48, completion: 85, quality: 'High' },
+    { category: 'Mental Health', patients: 2000, avgAge: 35, completion: 62, quality: 'Medium' },
+    { category: 'Oncology', patients: 450, avgAge: 58, completion: 91, quality: 'High' },
+    { category: 'Neurology', patients: 650, avgAge: 45, completion: 73, quality: 'High' },
+    { category: 'Respiratory', patients: 920, avgAge: 41, completion: 68, quality: 'Medium' }
+  ];
+
+  const aiInsights = [
+    {
+      title: "Trending Research Opportunity",
+      description: "Cardiovascular data shows 23% increase in availability this month",
+      action: "Explore Dataset",
+      priority: "high"
+    },
+    {
+      title: "Participant Recruitment Alert",
+      description: "Your diabetes study is 15% behind recruitment targets",
+      action: "Adjust Criteria",
+      priority: "medium"
+    },
+    {
+      title: "Data Quality Improvement",
+      description: "New validation algorithms available for your active studies",
+      action: "Apply Updates",
+      priority: "low"
+    }
+  ];
+
+  const collaborationRequests = [
+    {
+      id: 1,
+      from: "Dr. Sarah Chen - Stanford Medical",
+      study: "Multi-center Cardiovascular Study",
+      message: "Would like to collaborate on patient outcome analysis",
+      status: "pending"
+    },
+    {
+      id: 2,
+      from: "Research Team - Mayo Clinic",
+      study: "Diabetes Prevention Initiative",
+      message: "Interested in sharing anonymized datasets",
+      status: "pending"
+    }
+  ];
+
+  const renderOverviewTab = () => (
+    <div className="tab-content">
+      {/* Stats Grid */}
+      <div className="stats-grid">
+        <StatCard
+          title="Active Studies"
+          value={activeStudies}
+          icon={Database}
+          trend={{ value: '+2 this quarter', isPositive: true }}
+          color="purple"
+        />
+        <StatCard
+          title="Total Participants"
+          value={totalParticipants.toLocaleString()}
+          icon={Users}
+          trend={{ value: '+15.2%', isPositive: true }}
+          color="blue"
+        />
+        <StatCard
+          title="Recruiting"
+          value={recruitingStudies}
+          icon={UserPlus}
+          color="green"
+        />
+        <StatCard
+          title="Data Points"
+          value="2.1M"
+          icon={BarChart3}
+          trend={{ value: '+8.7%', isPositive: true }}
+          color="yellow"
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Active Studies" value={activeStudies} icon={Database} trend={{ value: '+2 this quarter', isPositive: true }} color="purple" />
-        <StatCard title="Total Participants" value={totalParticipants.toLocaleString()} icon={Users} trend={{ value: '+15.2%', isPositive: true }} color="blue" />
-        <StatCard title="Recruiting" value={recruitingStudies} icon={Users} color="green" />
-        <StatCard title="Data Points" value="2.1M" icon={TrendingUp} trend={{ value: '+8.7%', isPositive: true }} color="yellow" />
+      {/* AI-Powered Insights */}
+      <div className="card">
+        <div className="card-header">
+          <Brain className="icon-purple" />
+          <h3>AI Research Assistant</h3>
+          <span className="badge badge-purple">Beta</span>
+        </div>
+        <div className="insights-grid">
+          {aiInsights.map((insight, index) => (
+            <div key={index} className={`insight-card insight-${insight.priority}`}>
+              <h4>{insight.title}</h4>
+              <p className="insight-description">{insight.description}</p>
+              <button className="insight-action">
+                {insight.action} →
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Research Studies</h3>
-            <button className="icon-btn flex items-center space-x-1" onClick={() => alert('Add study modal coming soon!')}>
-              <Plus />
-              <span className="text-sm font-medium">New Research</span>
-            </button>
-          </div>
-          {researchStudies.map((study) => (
-            <div key={study.id} className="p-4 border rounded-lg mb-4 hover:bg-gray-50">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-medium">{study.title}</h4>
-                <span className={`status-badge ${study.status}`}>{study.status}</span>
+      {/* Quick Actions */}
+      <div className="quick-actions-grid">
+        <button 
+          onClick={() => setModal('dataSearch')}
+          className="action-btn action-btn-blue"
+        >
+          <Search className="action-icon" />
+          <span>Search Data</span>
+        </button>
+        <button 
+          onClick={() => setModal('newStudy')}
+          className="action-btn action-btn-green"
+        >
+          <Plus className="action-icon" />
+          <span>New Study</span>
+        </button>
+        <button className="action-btn action-btn-purple">
+          <BarChart3 className="action-icon" />
+          <span>Analytics</span>
+        </button>
+        <button 
+          onClick={() => setModal('collaboration')}
+          className="action-btn action-btn-orange"
+        >
+          <Share2 className="action-icon" />
+          <span>Collaborate</span>
+        </button>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="two-column-grid">
+        <div className="card">
+          <h3>Recent Activity</h3>
+          <div className="activity-list">
+            <div className="activity-item">
+              <div className="activity-dot activity-dot-green"></div>
+              <div className="activity-content">
+                <p className="activity-title">Data request approved</p>
+                <p className="activity-subtitle">Cardiovascular study - 2 hours ago</p>
               </div>
-              <p className="text-sm text-gray-600 mb-3">{study.description}</p>
-              <div className="flex justify-between text-sm text-gray-500 items-center">
-                <div className="flex space-x-4">
-                  <span><Users className="inline mr-1 h-4 w-4" />{study.participants.toLocaleString()} participants</span>
-                  <span>{study.duration}</span>
+            </div>
+            <div className="activity-item">
+              <div className="activity-dot activity-dot-blue"></div>
+              <div className="activity-content">
+                <p className="activity-title">New participant enrolled</p>
+                <p className="activity-subtitle">Diabetes prevention study - 4 hours ago</p>
+              </div>
+            </div>
+            <div className="activity-item">
+              <div className="activity-dot activity-dot-yellow"></div>
+              <div className="activity-content">
+                <p className="activity-title">Study milestone reached</p>
+                <p className="activity-subtitle">Mental health research - 1 day ago</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <h3>Collaboration Requests</h3>
+          <div className="collaboration-list">
+            {collaborationRequests.map((request) => (
+              <div key={request.id} className="collaboration-item">
+                <div className="collaboration-content">
+                  <p className="collaboration-from">{request.from}</p>
+                  <p className="collaboration-study">{request.study}</p>
+                  <p className="collaboration-message">{request.message}</p>
                 </div>
-                <span className="text-green-600 font-medium">{study.compensation} ICP</span>
+                <div className="collaboration-actions">
+                  <button className="collaboration-btn collaboration-btn-approve">
+                    <CheckCircle className="collaboration-icon" />
+                  </button>
+                  <button className="collaboration-btn collaboration-btn-reject">
+                    <X className="collaboration-icon" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStudiesTab = () => (
+    <div className="tab-content">
+      <div className="tab-header">
+        <h2>Research Studies</h2>
+        <button 
+          onClick={() => setModal('newStudy')}
+          className="btn-primary"
+        >
+          <Plus className="btn-icon" />
+          <span>New Study</span>
+        </button>
+      </div>
+
+      <div className="studies-container">
+        <div className="card">
+          <div className="studies-list">
+            {researchStudies.map((study) => (
+              <div key={study.id} className="study-item">
+                <div className="study-main">
+                  <div className="study-header">
+                    <button
+                      onClick={() => setExpandedStudy(expandedStudy === study.id ? null : study.id)}
+                      className="expand-btn"
+                    >
+                      {expandedStudy === study.id ? 
+                        <ChevronDown className="expand-icon" /> : 
+                        <ChevronRight className="expand-icon" />
+                      }
+                    </button>
+                    <h4 className="study-title">{study.title}</h4>
+                    <span className={`status-badge status-${study.status}`}>
+                      {study.status}
+                    </span>
+                  </div>
+                  <p className="study-description">{study.description}</p>
+                  
+                  {expandedStudy === study.id && (
+                    <div className="study-expanded">
+                      <div className="study-metrics">
+                        <div className="metric">
+                          <p className="metric-label">Progress</p>
+                          <div className="progress-bar">
+                            <div className="progress-fill" style={{ width: '65%' }}></div>
+                          </div>
+                          <p className="metric-value">65% Complete</p>
+                        </div>
+                        <div className="metric">
+                          <p className="metric-label">Data Quality</p>
+                          <div className="rating">
+                            {[1,2,3,4,5].map(i => (
+                              <Star key={i} className={`star ${i <= 4 ? 'star-filled' : 'star-empty'}`} />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="metric">
+                          <p className="metric-label">Last Updated</p>
+                          <p className="metric-value">2 hours ago</p>
+                        </div>
+                      </div>
+                      <div className="study-actions">
+                        <button className="study-action-btn study-action-blue">View Details</button>
+                        <button className="study-action-btn study-action-green">Export Data</button>
+                        <button className="study-action-btn study-action-purple">Analytics</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="study-info">
+                  <div className="study-stats">
+                    <span className="study-stat">
+                      <Users className="study-stat-icon" />
+                      <span>{study.participants.toLocaleString()}</span>
+                    </span>
+                    <span className="study-duration">{study.duration}</span>
+                  </div>
+                  <p className="study-compensation">{study.compensation} ICP</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAnalyticsTab = () => (
+    <div className="tab-content">
+      <h2>Data Analytics</h2>
+      
+      {/* Analytics Overview */}
+      <div className="analytics-overview">
+        <div className="card">
+          <div className="card-header">
+            <PieChart className="icon-blue" />
+            <h3>Data Distribution</h3>
+          </div>
+          <div className="analytics-items">
+            {analyticsData.slice(0, 4).map((item, index) => (
+              <div key={index} className="analytics-item">
+                <span className="analytics-label">{item.category}</span>
+                <span className="analytics-value">{item.patients}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <Activity className="icon-green" />
+            <h3>Quality Metrics</h3>
+          </div>
+          <div className="analytics-items">
+            <div className="analytics-item">
+              <span className="analytics-label">High Quality</span>
+              <span className="analytics-value quality-high">78%</span>
+            </div>
+            <div className="analytics-item">
+              <span className="analytics-label">Medium Quality</span>
+              <span className="analytics-value quality-medium">18%</span>
+            </div>
+            <div className="analytics-item">
+              <span className="analytics-label">Low Quality</span>
+              <span className="analytics-value quality-low">4%</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <TrendingUp className="icon-purple" />
+            <h3>Trends</h3>
+          </div>
+          <div className="analytics-items">
+            <div className="analytics-item">
+              <span className="analytics-label">Data Requests</span>
+              <span className="analytics-value trend-up">↑ 23%</span>
+            </div>
+            <div className="analytics-item">
+              <span className="analytics-label">Participants</span>
+              <span className="analytics-value trend-up">↑ 15%</span>
+            </div>
+            <div className="analytics-item">
+              <span className="analytics-label">Completion Rate</span>
+              <span className="analytics-value trend-neutral">↑ 8%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Detailed Analytics */}
+      <div className="card">
+        <h3>Category Analysis</h3>
+        <div className="category-analysis">
+          {analyticsData.map((item, index) => (
+            <div key={index} className="category-item">
+              <div className="category-header">
+                <h4>{item.category}</h4>
+                <div className="category-stats">
+                  <span>{item.patients.toLocaleString()} patients</span>
+                  <span>Avg. Age: {item.avgAge}</span>
+                  <span className={`quality-badge quality-${item.quality.toLowerCase()}`}>
+                    {item.quality} Quality
+                  </span>
+                </div>
+              </div>
+              <div className="category-details">
+                <span>Completion: {item.completion}%</span>
+                <button className="view-details-btn">View Details →</button>
+              </div>
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${item.completion}%` }}
+                ></div>
               </div>
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
 
-        <div className="bg-white rounded-xl border p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Data Access</h3>
-            <button className="market-request-btn" onClick={() => setModal('dataSearch')}>Request Data Access</button>
-          </div>
-          <ul className="text-sm space-y-2">
-            <li>• Search for records from doctors, keywords, or document types</li>
-            <li>• Submit compensation in ICP tokens</li>
-            <li>• Download accepted documents instantly</li>
-          </ul>
-        </div>
+  const renderDataRequestsTab = () => (
+    <div className="tab-content">
+      <div className="tab-header">
+        <h2>Data Requests</h2>
+        <button 
+          onClick={() => setModal('dataSearch')}
+          className="btn-primary"
+        >
+          <Search className="btn-icon" />
+          <span>New Request</span>
+        </button>
       </div>
 
-      <div className="bg-white rounded-xl border p-6">
-        <h3 className="text-lg font-semibold mb-4">My Data Requests</h3>
-        <div className="space-y-4">
+      <div className="card">
+        <div className="requests-list">
           {researcherDataRequests.map((req, index) => (
-            <React.Fragment key={req.id}>
-              <div className="border rounded-lg p-4 hover:bg-gray-50">
-                <div className="flex justify-between mb-2">
-                  <h4 className="font-medium">{req.requesterName} — {req.date}</h4>
-                  <span className={`status-badge ${req.status.replace(/\s+/g, '-')}`}>{req.status}</span>
+            <div key={req.id} className="request-item">
+              <div className="request-main">
+                <div className="request-header">
+                  <h4 className="request-name">{req.requesterName}</h4>
+                  <span className={`status-badge status-${req.status.replace(' ', '-')}`}>
+                    {req.status}
+                  </span>
                 </div>
-                <p className="text-sm text-gray-700">
-                  <strong>Requested:</strong> {req.dataSourcesRequested.join(', ')}<br />
-                  <strong>Received:</strong> {req.dataSourcesReceived.length > 0 ? req.dataSourcesReceived.join(', ') : 'None'}<br />
-                  <strong>Compensation:</strong> {req.compensation} ICP
+                <p className="request-detail">
+                  <strong>Requested:</strong> {req.dataSourcesRequested.join(', ')}
                 </p>
                 {req.dataSourcesReceived.length > 0 && (
-                  <button className="mt-2 text-blue-600 hover:underline text-sm">
-                    📥 Download Documents
+                  <p className="request-detail">
+                    <strong>Received:</strong> {req.dataSourcesReceived.join(', ')}
+                  </p>
+                )}
+                <div className="request-meta">
+                  <span>{req.date}</span>
+                  <span className="request-compensation">{req.compensation} ICP</span>
+                </div>
+              </div>
+              <div className="request-actions">
+                {req.dataSourcesReceived.length > 0 && (
+                  <button className="request-action-btn">
+                    <Download className="request-action-icon" />
                   </button>
                 )}
+                <button className="request-action-btn">
+                  <Eye className="request-action-icon" />
+                </button>
               </div>
-              {index !== researcherDataRequests.length - 1 && (
-                <hr className="border-t border-gray-300 my-4" />
+              
+              {req.status === 'pending' && (
+                <div className="request-status">
+                  <div className="request-status-content">
+                    <Clock className="request-status-icon" />
+                    <span>Waiting for patient approval</span>
+                  </div>
+                </div>
               )}
-            </React.Fragment>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="dashboard">
+      {/* Header */}
+      
+      
+
+      {/* Navigation Tabs */}
+      <div className="nav-tabs">
+        <div className="nav-tabs-container">
+          {[
+            { id: 'overview', label: 'Overview', icon: BarChart3 },
+            { id: 'studies', label: 'Studies', icon: Microscope },
+            { id: 'analytics', label: 'Analytics', icon: PieChart },
+            { id: 'requests', label: 'Data Requests', icon: FileText }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`nav-tab ${activeTab === tab.id ? 'nav-tab-active' : ''}`}
+            >
+              <tab.icon className="nav-tab-icon" />
+              <span>{tab.label}</span>
+            </button>
           ))}
         </div>
       </div>
 
+      {/* Tab Content */}
+      {activeTab === 'overview' && renderOverviewTab()}
+      {activeTab === 'studies' && renderStudiesTab()}
+      {activeTab === 'analytics' && renderAnalyticsTab()}
+      {activeTab === 'requests' && renderDataRequestsTab()}
+
+      {/* Advanced Data Search Modal */}
       {modal === 'dataSearch' && (
         <div className="modal-overlay">
-          <div className="modal-content wide">
-            <button className="modal-close-icon" onClick={() => setModal(null)}>×</button>
-            <h2 className="modal-title">Search Health Records</h2>
-            <div className="modal-body space-y-4">
-              <input
-                type="text"
-                className="input w-full"
-                placeholder="Search by doctor name, keyword, or document type"
-                autoFocus
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <div className="max-h-60 overflow-y-auto">
-                {searchResults.map((item) => (
-                  <label key={item.id} className="block border-b py-2 text-sm">
-                    <input
-                      type="checkbox"
-                      className="mr-2"
-                      checked={selectedSources.includes(item.id)}
-                      onChange={() => toggleSourceSelection(item.id)}
-                    />
-                    <strong>{item.title}</strong> — {item.type}, Provider: {item.provider}
-                  </label>
-                ))}
+          <div className="modal modal-large">
+            <div className="modal-header">
+              <h2>Advanced Data Search</h2>
+              <button
+                onClick={() => setModal(null)}
+                className="modal-close"
+              >
+                <X className="close-icon" />
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              {/* Search and Filters */}
+              <div className="search-filters">
+                <div className="form-group">
+                  <label className="form-label">Search Query</label>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by condition, provider, or document type..."
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Age Range</label>
+                  <select
+                    value={filters.ageRange}
+                    onChange={(e) => setFilters({...filters, ageRange: e.target.value})}
+                    className="form-select"
+                  >
+                    <option value="">All Ages</option>
+                    <option value="18-30">18-30</option>
+                    <option value="31-50">31-50</option>
+                    <option value="51-70">51-70</option>
+                    <option value="70+">70+</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Gender</label>
+                  <select
+                    value={filters.gender}
+                    onChange={(e) => setFilters({...filters, gender: e.target.value})}
+                    className="form-select"
+                  >
+                    <option value="">All Genders</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Data Quality</label>
+                  <select
+                    value={filters.dataQuality}
+                    onChange={(e) => setFilters({...filters, dataQuality: e.target.value})}
+                    className="form-select"
+                  >
+                    <option value="">All Quality Levels</option>
+                    <option value="high">High Quality</option>
+                    <option value="medium">Medium Quality</option>
+                    <option value="low">Low Quality</option>
+                  </select>
+                </div>
               </div>
-              <input
-                type="number"
-                className="input"
-                placeholder="Compensation (ICP Tokens)"
-                value={compensation}
-                onChange={(e) => setCompensation(e.target.value)}
-                required
-              />
-              <button className="submit-btn w-full" onClick={handleSubmitRequest}>Submit Request for Approval</button>
+
+              {/* Search Results */}
+              {searchResults.length > 0 && (
+                <div className="search-results">
+                  <h3>Search Results ({searchResults.length} found)</h3>
+                  <div className="results-container">
+                    <div className="results-list">
+                      {searchResults.map((item) => (
+                        <label key={item.id} className="result-item">
+                          <input
+                            type="checkbox"
+                            checked={selectedSources.includes(item.id)}
+                            onChange={() => toggleSourceSelection(item.id)}
+                            className="result-checkbox"
+                          />
+                          <div className="result-content">
+                            <h4 className="result-title">{item.title}</h4>
+                            <p className="result-meta">{item.type} • {item.provider}</p>
+                            <p className="result-description">{item.description}</p>
+                            <div className="result-badges">
+                              <span className="badge badge-blue">
+                                ${item.value}
+                              </span>
+                              <span className="badge badge-green">
+                                High Quality
+                              </span>
+                              <span className="result-date">{item.date}</span>
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Compensation */}
+              <div className="form-group">
+                <label className="form-label">
+                  Compensation Offer (ICP Tokens)
+                </label>
+                <input
+                  type="number"
+                  value={compensation}
+                  onChange={(e) => setCompensation(e.target.value)}
+                  placeholder="Enter compensation amount"
+                  className="form-input"
+                />
+                <p className="form-help">
+                  Recommended: ${selectedSources.length * 50} - ${selectedSources.length * 150}
+                </p>
+              </div>
+
+              {/* Submit */}
+              <div className="modal-footer">
+                <div className="modal-footer-info">
+                  {selectedSources.length} data source{selectedSources.length !== 1 ? 's' : ''} selected
+                </div>
+                <div className="modal-footer-actions">
+                  <button
+                    onClick={() => setModal(null)}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSubmitRequest}
+                    disabled={!compensation || selectedSources.length === 0}
+                    className="btn-primary"
+                  >
+                    Submit Request
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Collaboration Modal */}
+      {modal === 'collaboration' && (
+        <div className="modal-overlay">
+          <div className="modal modal-medium">
+            <div className="modal-header">
+              <h2>Research Collaboration</h2>
+              <button
+                onClick={() => setModal(null)}
+                className="modal-close"
+              >
+                <X className="close-icon" />
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="info-banner">
+                <div className="info-banner-content">
+                  <Share2 className="info-banner-icon" />
+                  <div>
+                    <h3>Collaborate with Global Researchers</h3>
+                    <p>
+                      Connect with research institutions worldwide to share data, insights, and advance medical science together.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">
+                    <Building className="form-label-icon" />
+                    Institution/Organization
+                  </label>
+                  <input
+                    type="text"
+                    value={collaborationForm.institution}
+                    onChange={(e) => setCollaborationForm({...collaborationForm, institution: e.target.value})}
+                    placeholder="e.g., Stanford Medical Center"
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">
+                    <Mail className="form-label-icon" />
+                    Contact Email
+                  </label>
+                  <input
+                    type="email"
+                    value={collaborationForm.contactEmail}
+                    onChange={(e) => setCollaborationForm({...collaborationForm, contactEmail: e.target.value})}
+                    placeholder="researcher@institution.edu"
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Study Title</label>
+                <input
+                  type="text"
+                  value={collaborationForm.studyTitle}
+                  onChange={(e) => setCollaborationForm({...collaborationForm, studyTitle: e.target.value})}
+                  placeholder="Enter the title of your collaborative study"
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Data Types of Interest</label>
+                <div className="checkbox-grid">
+                  {['Cardiovascular', 'Diabetes', 'Mental Health', 'Oncology', 'Neurology', 'Respiratory'].map((type) => (
+                    <label key={type} className="checkbox-item">
+                      <input
+                        type="checkbox"
+                        checked={collaborationForm.dataTypes.includes(type)}
+                        onChange={() => toggleDataType(type)}
+                        className="checkbox-input"
+                      />
+                      <span className="checkbox-label">{type}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Collaboration Message</label>
+                <textarea
+                  rows={4}
+                  value={collaborationForm.message}
+                  onChange={(e) => setCollaborationForm({...collaborationForm, message: e.target.value})}
+                  placeholder="Describe your research goals, collaboration objectives, and how this partnership would benefit both parties..."
+                  className="form-textarea"
+                />
+              </div>
+
+              <div className="info-box">
+                <h4>What happens next?</h4>
+                <ul>
+                  <li>• Our team will review your collaboration request</li>
+                  <li>• We'll connect you with relevant researchers in your field</li>
+                  <li>• You'll receive a response within 2-3 business days</li>
+                  <li>• Data sharing agreements will be established if approved</li>
+                </ul>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  onClick={() => setModal(null)}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCollaborationSubmit}
+                  disabled={!collaborationForm.institution || !collaborationForm.contactEmail || !collaborationForm.studyTitle}
+                  className="btn-primary btn-with-icon"
+                >
+                  <Send className="btn-icon" />
+                  <span>Send Collaboration Request</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Study Modal */}
+      {modal === 'newStudy' && (
+        <div className="modal-overlay">
+          <div className="modal modal-medium">
+            <div className="modal-header">
+              <h2>Create New Study</h2>
+              <button
+                onClick={() => setModal(null)}
+                className="modal-close"
+              >
+                <X className="close-icon" />
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="form-group">
+                <label className="form-label">Study Title</label>
+                <input
+                  type="text"
+                  placeholder="Enter study title"
+                  className="form-input"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Description</label>
+                <textarea
+                  rows={4}
+                  placeholder="Describe your research study..."
+                  className="form-textarea"
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Target Participants</label>
+                  <input
+                    type="number"
+                    placeholder="1000"
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Duration</label>
+                  <select className="form-select">
+                    <option>3 months</option>
+                    <option>6 months</option>
+                    <option>1 year</option>
+                    <option>2 years</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  onClick={() => setModal(null)}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    alert('Study created successfully!');
+                    setModal(null);
+                  }}
+                  className="btn-primary"
+                >
+                  Create Study
+                </button>
+              </div>
             </div>
           </div>
         </div>

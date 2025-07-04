@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LandingPage from './components/pages/LandingPage'; // Optional if you want to keep it
 import LoginPage from './components/pages/LoginPage';
 import RegistrationPage from './components/pages/RegistrationPage';
 import Header from './components/shared/Header';
@@ -15,6 +16,7 @@ function App() {
   const [principalId, setPrincipalId] = useState('');
   const [patientViewMode, setPatientViewMode] = useState('dashboard'); // 'dashboard' or 'uploads'
   const [showResearchModal, setShowResearchModal] = useState(false);
+  const [currentView, setCurrentView] = useState('login'); // 'login' | 'landing' | 'dashboard'
 
   const handleLogin = (principal, user) => {
     setPrincipalId(principal);
@@ -23,6 +25,7 @@ function App() {
     } else {
       setCurrentUser(user);
       setIsLoggedIn(true);
+      setCurrentView('dashboard');
     }
   };
 
@@ -30,13 +33,25 @@ function App() {
     setCurrentUser(newUser);
     setIsLoggedIn(true);
     setNeedsRegistration(false);
+    setCurrentView('dashboard');
   };
 
   const handleBackToLanding = () => {
     setIsLoggedIn(false);
     setNeedsRegistration(false);
     setCurrentUser(null);
-    setPatientViewMode('dashboard'); // reset view
+    setPatientViewMode('dashboard');
+    setCurrentView('login');
+  };
+
+  const handleDemoLogin = (role) => {
+    setCurrentUser({
+      name: 'Demo User',
+      email: 'demo@healthvault.com',
+      role: role
+    });
+    setIsLoggedIn(true);
+    setCurrentView('dashboard');
   };
 
   const renderDashboard = () => {
@@ -73,18 +88,22 @@ function App() {
     );
   }
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn && currentView === 'login') {
     return <LoginPage onLogin={handleLogin} />;
+  }
+
+  if (currentView === 'landing') {
+    return <LandingPage onLogin={handleDemoLogin} />;
   }
 
   return (
     <div className="app-wrapper">
       <Header
-  currentUser={currentUser}
-  onBackToLanding={handleBackToLanding}
-  onMyUploadsClick={() => setPatientViewMode('uploads')}
-  onNewResearchClick={() => setShowResearchModal(true)} // ✅ Add this
-/>
+        currentUser={currentUser}
+        onBackToLanding={handleBackToLanding}
+        onMyUploadsClick={() => setPatientViewMode('uploads')}
+        onNewResearchClick={() => setShowResearchModal(true)}
+      />
       <main className="main-content">{renderDashboard()}</main>
       <Footer />
     </div>

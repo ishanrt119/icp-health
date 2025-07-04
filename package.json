@@ -10,10 +10,16 @@
     "pretest": "npm run prebuild --workspaces --if-present",
     "start": "npm start --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
-    "dev":"vite"
+    "dev": "vite"
   },
   "type": "module",
   "workspaces": [
     "src/icp-health-frontend"
-  ]
+  ],
+  "devDependencies": {
+    "@types/node": "^24.0.10"
+  },
+  "dependencies": {
+    "lucide-react": "^0.525.0"
+  }
 }
