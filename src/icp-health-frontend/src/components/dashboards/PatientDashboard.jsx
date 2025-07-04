@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import {
   FileText,
   Upload,
@@ -19,6 +19,7 @@ const canisterId = import.meta.env.VITE_CANISTER_ID_ICP_HEALTH_BACKEND;
 
 const PatientDashboard = ({ viewMode = 'dashboard', onBackToDashboard }) => {
   const [dragActive, setDragActive] = useState(false);
+  const uploadsTableRef = useRef(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [category, setCategory] = useState('');
   const [keywords, setKeywords] = useState('');
@@ -27,6 +28,7 @@ const PatientDashboard = ({ viewMode = 'dashboard', onBackToDashboard }) => {
   const [filteredDoctors, setFilteredDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [totalEarnings, setTotalEarnings] = useState(0);
+const [sharedRecords, setSharedRecords] = useState(0);
 
   const [schemeSearch, setSchemeSearch] = useState('');
 const [selectedScheme, setSelectedScheme] = useState(null);
@@ -116,7 +118,7 @@ const filteredSchemes = schemes.filter(scheme =>
 console.log("All Doctors:", allDoctors);
 
   const pendingRequests = dataRequests.filter(r => r.status === 'pending').length;
-  const sharedRecords = healthRecords.filter(r => r.status === 'shared' || r.status === 'monetized').length;
+  
   
 
   const handleDrag = (e) => {
@@ -263,6 +265,9 @@ const handleSchemeApply = () => {
     }
 
     alert(`${uploadedFiles.length} of ${uploadedFiles.length} file(s) uploaded.`);
+     if (uploadsTableRef.current) {
+      uploadsTableRef.current.refreshUploads();
+    }
     setUploadedFiles([]);
     setCategory('');
     setKeywords('');
@@ -283,7 +288,12 @@ const handleSchemeApply = () => {
               ← Back to Dashboard
             </button>
           </div>
-          <MyUploadsTable />
+          <MyUploadsTable
+  ref={uploadsTableRef}
+  onUploadCountChange={setSharedRecords}
+  onEarningsChange={setTotalEarnings}
+/>
+
         </div>
       </div>
     );
@@ -298,14 +308,10 @@ const handleSchemeApply = () => {
             <h3>Total Earnings</h3>
             <p><span style={{ fontSize: '20px', marginRight: '4px' }}>♾</span>{totalEarnings}</p>
           </div>
-          <div className="stat-card">
-            <Clock className="stat-icon yellow" />
-            <h3>Pending Requests</h3>
-            <p>{pendingRequests}</p>
-          </div>
+          
           <div className="stat-card">
             <Upload className="stat-icon blue" />
-            <h3>Records Shared</h3>
+            <h3>Uploaded Records</h3>
             <p>{sharedRecords}</p>
           </div>
         </div>
@@ -406,7 +412,7 @@ const handleSchemeApply = () => {
           </div>
 
           <button className="upload-submit-btn" onClick={handleSubmit}>Upload</button>
-
+          
        {/* === Search Scheme Section === */}
 <div className="select-scheme-box">
   <div className="scheme-title-row">

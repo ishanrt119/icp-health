@@ -42,6 +42,8 @@ import {
 import StatCard from '../shared/StatCard';
 import { researchStudies, healthRecords, researcherDataRequests } from '../../utils/mockData';
 import './researcher.css';  
+import { Principal } from '@dfinity/principal';
+import { icp_health_backend } from '../../../../declarations/icp-health-backend';
 
 const ResearcherDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -57,6 +59,41 @@ const ResearcherDashboard = () => {
     dateRange: '',
     dataQuality: ''
   });
+
+const [collaborationForm, setCollaborationForm] = useState({
+  institution: '',
+  contactEmail: '',
+  studyTitle: '',
+  message: '',
+  dataTypes: [],
+  collaborators: []  // array of principals
+});
+const [collaborators, setCollaborators] = useState([]);
+const [searchCollaborators, setSearchCollaborators] = useState('');
+
+useEffect(() => {
+ const fetchCollaborators = async () => {
+  try {
+    const collaborators = await icp_health_backend.get_all_collaborators();
+    console.log("Collaborators:", collaborators);
+    setCollaborators(collaborators);
+  } catch (err) {
+    console.error("Error fetching collaborators:", err);
+  }
+};
+  fetchCollaborators();
+}, []);
+
+
+const toggleCollaborator = (principal) => {
+  setCollaborationForm((prev) => ({
+    ...prev,
+    collaborators: prev.collaborators.includes(principal)
+      ? prev.collaborators.filter((p) => p !== principal)
+      : [...prev.collaborators, principal],
+  }));
+};
+
   const [expandedStudy, setExpandedStudy] = useState(null);
   const [notifications, setNotifications] = useState([
     { id: 1, type: 'success', message: 'New cardiovascular dataset available', time: '2 hours ago' },
@@ -64,15 +101,34 @@ const ResearcherDashboard = () => {
     { id: 3, type: 'warning', message: 'Data request approval pending for 3 days', time: '1 day ago' }
   ]);
 
-  // Collaboration state
-  const [collaborationForm, setCollaborationForm] = useState({
-    institution: '',
-    contactEmail: '',
-    studyTitle: '',
-    message: '',
-    dataTypes: []
-  });
+  const timeAgo = (timestamp) => {
+  const now = new Date();
+  const created = new Date(timestamp);
+  const diffMs = now - created;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
 
+  return diffHours > 0
+    ? `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+    : `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+};
+
+
+  const [createdStudies, setCreatedStudies] = useState(() => {
+  const stored = localStorage.getItem('createdStudies');
+  return stored ? JSON.parse(stored) : [];
+});
+const [newStudyForm, setNewStudyForm] = useState({
+  title: '',
+  description: '',
+  participants: '',
+  duration: '3 months'
+});
+
+  // Collaboration state
+  
+
+  
   // Advanced search with filters
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -82,6 +138,7 @@ const ResearcherDashboard = () => {
         rec.provider.toLowerCase().includes(query) ||
         rec.description.toLowerCase().includes(query) ||
         rec.type.toLowerCase().includes(query)
+        
       );
 
       // Apply filters
@@ -221,142 +278,173 @@ const ResearcherDashboard = () => {
     }
   ];
 
-  const renderOverviewTab = () => (
-    <div className="tab-content">
-      {/* Stats Grid */}
-      <div className="stats-grid">
-        <StatCard
-          title="Active Studies"
-          value={activeStudies}
-          icon={Database}
-          trend={{ value: '+2 this quarter', isPositive: true }}
-          color="purple"
-        />
-        <StatCard
-          title="Total Participants"
-          value={totalParticipants.toLocaleString()}
-          icon={Users}
-          trend={{ value: '+15.2%', isPositive: true }}
-          color="blue"
-        />
-        <StatCard
-          title="Recruiting"
-          value={recruitingStudies}
-          icon={UserPlus}
-          color="green"
-        />
-        <StatCard
-          title="Data Points"
-          value="2.1M"
-          icon={BarChart3}
-          trend={{ value: '+8.7%', isPositive: true }}
-          color="yellow"
-        />
-      </div>
+const renderOverviewTab = () => (
+  <div className="tab-content">
+    {/* Stats Grid */}
+    <div className="stats-grid">
+   <StatCard
+  title="Active Studies"
+  value={createdStudies.length}
+  icon={Database}
+  trend={{ value: `+${createdStudies.length} total`, isPositive: true }}
+  color="purple"
+/>
 
-      {/* AI-Powered Insights */}
+      <StatCard
+        title="Total Participants"
+        value={totalParticipants.toLocaleString()}
+        icon={Users}
+        trend={{ value: '+15.2%', isPositive: true }}
+        color="blue"
+      />
+      
+      <StatCard
+        title="Data Points"
+        value="2.1M"
+        icon={BarChart3}
+        trend={{ value: '+8.7%', isPositive: true }}
+        color="yellow"
+      />
+    </div>
+
+    {/* AI-Powered Insights */}
+    <div className="card">
+      <div className="card-header">
+        <Brain className="icon-purple" />
+        <h3>AI Research Assistant</h3>
+        <span className="badge badge-purple">Beta</span>
+      </div>
+      <div className="insights-grid">
+        {aiInsights.map((insight, index) => (
+          <div
+            key={index}
+            className={`insight-card insight-${insight.priority}`}
+          >
+            <h4>{insight.title}</h4>
+            <p className="insight-description">{insight.description}</p>
+            <button className="insight-action">
+              {insight.action} →
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+    
+
+    {/* Quick Actions */}
+    <div className="quick-actions-grid">
+      <button
+        onClick={() => setModal('dataSearch')}
+        className="action-btn action-btn-blue"
+      >
+        <Search className="action-icon" />
+        <span>Search Data</span>
+      </button>
+      <button
+        onClick={() => setModal('newStudy')}
+        className="action-btn action-btn-green"
+      >
+        <Plus className="action-icon" />
+        <span>New Study</span>
+      </button>
+      <button className="action-btn action-btn-purple">
+        <BarChart3 className="action-icon" />
+        <span>Analytics</span>
+      </button>
+      <button
+        onClick={() => setModal('collaboration')}
+        className="action-btn action-btn-orange"
+      >
+        <Share2 className="action-icon" />
+        <span>Collaborate</span>
+      </button>
+    </div>
+
+  {/* Recent Activity & My Research Studies */}
+<div className="two-column-grid">
+  {/* Recent Activity */}
+  <div className="card">
+    <h3></h3>
+    <div className="activity-list">
+      {/* Example activities */}
+      <div className="activity-item">
+        
+      </div>
+    </div>
+
+
+  {/* ✅ My Research Studies Card */}
+  <div className="card">
+    <div className="card-header">
+      <Microscope className="icon-green" />
+      <h3>My Research Studies</h3>
+    </div>
+    <div className="studies-summary">
+      {createdStudies.length === 0 ? (
+        <p>No studies created yet. Click "New Study" to begin.</p>
+      ) : (
+        createdStudies.slice(0, 3).map((study) => (
+          <div className="study-summary-item" key={study.id}>
+            <div className="study-summary-header">
+              <h4 className="study-summary-title">{study.title}</h4>
+              <span className="study-summary-time">{timeAgo(study.createdAt)}</span>
+            </div>
+            <p className="study-summary-desc">
+              {study.description.slice(0, 80)}...
+            </p>
+            <div className="study-summary-meta">
+              <span>{study.participants} participants</span>
+              <span>{study.duration}</span>
+              <span>{study.compensation} ICP</span>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+
+   {/* ✅ View All Button */}
+{createdStudies.length > 3 && (
+  <div className="card-footer center-button">
+    <button
+      className="btn-view-all"
+      onClick={() => setActiveTab('studies')}
+    >
+      View All
+    </button>
+  </div>
+)}
+
+  </div>
+</div>
+      
+
+      {/* Collaboration Requests */}
       <div className="card">
-        <div className="card-header">
-          <Brain className="icon-purple" />
-          <h3>AI Research Assistant</h3>
-          <span className="badge badge-purple">Beta</span>
-        </div>
-        <div className="insights-grid">
-          {aiInsights.map((insight, index) => (
-            <div key={index} className={`insight-card insight-${insight.priority}`}>
-              <h4>{insight.title}</h4>
-              <p className="insight-description">{insight.description}</p>
-              <button className="insight-action">
-                {insight.action} →
-              </button>
+        <h3>Collaboration Requests</h3>
+        <div className="collaboration-list">
+          {collaborationRequests.map((request) => (
+            <div key={request.id} className="collaboration-item">
+              <div className="collaboration-content">
+                <p className="collaboration-from">{request.from}</p>
+                <p className="collaboration-study">{request.study}</p>
+                <p className="collaboration-message">{request.message}</p>
+              </div>
+              <div className="collaboration-actions">
+                <button className="collaboration-btn collaboration-btn-approve">
+                  <CheckCircle className="collaboration-icon" />
+                </button>
+                <button className="collaboration-btn collaboration-btn-reject">
+                  <X className="collaboration-icon" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Quick Actions */}
-      <div className="quick-actions-grid">
-        <button 
-          onClick={() => setModal('dataSearch')}
-          className="action-btn action-btn-blue"
-        >
-          <Search className="action-icon" />
-          <span>Search Data</span>
-        </button>
-        <button 
-          onClick={() => setModal('newStudy')}
-          className="action-btn action-btn-green"
-        >
-          <Plus className="action-icon" />
-          <span>New Study</span>
-        </button>
-        <button className="action-btn action-btn-purple">
-          <BarChart3 className="action-icon" />
-          <span>Analytics</span>
-        </button>
-        <button 
-          onClick={() => setModal('collaboration')}
-          className="action-btn action-btn-orange"
-        >
-          <Share2 className="action-icon" />
-          <span>Collaborate</span>
-        </button>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="two-column-grid">
-        <div className="card">
-          <h3>Recent Activity</h3>
-          <div className="activity-list">
-            <div className="activity-item">
-              <div className="activity-dot activity-dot-green"></div>
-              <div className="activity-content">
-                <p className="activity-title">Data request approved</p>
-                <p className="activity-subtitle">Cardiovascular study - 2 hours ago</p>
-              </div>
-            </div>
-            <div className="activity-item">
-              <div className="activity-dot activity-dot-blue"></div>
-              <div className="activity-content">
-                <p className="activity-title">New participant enrolled</p>
-                <p className="activity-subtitle">Diabetes prevention study - 4 hours ago</p>
-              </div>
-            </div>
-            <div className="activity-item">
-              <div className="activity-dot activity-dot-yellow"></div>
-              <div className="activity-content">
-                <p className="activity-title">Study milestone reached</p>
-                <p className="activity-subtitle">Mental health research - 1 day ago</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <h3>Collaboration Requests</h3>
-          <div className="collaboration-list">
-            {collaborationRequests.map((request) => (
-              <div key={request.id} className="collaboration-item">
-                <div className="collaboration-content">
-                  <p className="collaboration-from">{request.from}</p>
-                  <p className="collaboration-study">{request.study}</p>
-                  <p className="collaboration-message">{request.message}</p>
-                </div>
-                <div className="collaboration-actions">
-                  <button className="collaboration-btn collaboration-btn-approve">
-                    <CheckCircle className="collaboration-icon" />
-                  </button>
-                  <button className="collaboration-btn collaboration-btn-reject">
-                    <X className="collaboration-icon" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
-  );
+  </div>
+);
+
 
   const renderStudiesTab = () => (
     <div className="tab-content">
@@ -371,75 +459,105 @@ const ResearcherDashboard = () => {
         </button>
       </div>
 
-      <div className="studies-container">
-        <div className="card">
-          <div className="studies-list">
-            {researchStudies.map((study) => (
-              <div key={study.id} className="study-item">
-                <div className="study-main">
-                  <div className="study-header">
-                    <button
-                      onClick={() => setExpandedStudy(expandedStudy === study.id ? null : study.id)}
-                      className="expand-btn"
-                    >
-                      {expandedStudy === study.id ? 
-                        <ChevronDown className="expand-icon" /> : 
-                        <ChevronRight className="expand-icon" />
-                      }
-                    </button>
-                    <h4 className="study-title">{study.title}</h4>
-                    <span className={`status-badge status-${study.status}`}>
-                      {study.status}
-                    </span>
-                  </div>
-                  <p className="study-description">{study.description}</p>
-                  
-                  {expandedStudy === study.id && (
-                    <div className="study-expanded">
-                      <div className="study-metrics">
-                        <div className="metric">
-                          <p className="metric-label">Progress</p>
-                          <div className="progress-bar">
-                            <div className="progress-fill" style={{ width: '65%' }}></div>
-                          </div>
-                          <p className="metric-value">65% Complete</p>
-                        </div>
-                        <div className="metric">
-                          <p className="metric-label">Data Quality</p>
-                          <div className="rating">
-                            {[1,2,3,4,5].map(i => (
-                              <Star key={i} className={`star ${i <= 4 ? 'star-filled' : 'star-empty'}`} />
-                            ))}
-                          </div>
-                        </div>
-                        <div className="metric">
-                          <p className="metric-label">Last Updated</p>
-                          <p className="metric-value">2 hours ago</p>
-                        </div>
-                      </div>
-                      <div className="study-actions">
-                        <button className="study-action-btn study-action-blue">View Details</button>
-                        <button className="study-action-btn study-action-green">Export Data</button>
-                        <button className="study-action-btn study-action-purple">Analytics</button>
-                      </div>
+     <div className="studies-container">
+  <div className="card">
+    <div className="studies-list">
+      {[...createdStudies, ...researchStudies].map((study) => (
+        <div key={study.id} className="study-item">
+          <div className="study-main">
+            <div className="study-header">
+              <button
+                onClick={() =>
+                  setExpandedStudy(expandedStudy === study.id ? null : study.id)
+                }
+                className="expand-btn"
+              >
+                {expandedStudy === study.id ? (
+                  <ChevronDown className="expand-icon" />
+                ) : (
+                  <ChevronRight className="expand-icon" />
+                )}
+              </button>
+              <h4 className="study-title">{study.title}</h4>
+              <span className={`status-badge status-${study.status}`}>
+                {study.status}
+              </span>
+            </div>
+            <p className="study-description">{study.description}</p>
+
+            {expandedStudy === study.id && (
+              <div className="study-expanded">
+                <div className="study-metrics">
+                  <div className="metric">
+                    <p className="metric-label">Progress</p>
+                    <div className="progress-bar">
+                      <div
+                        className="progress-fill"
+                        style={{ width: '65%' }}
+                      ></div>
                     </div>
-                  )}
-                </div>
-                <div className="study-info">
-                  <div className="study-stats">
-                    <span className="study-stat">
-                      <Users className="study-stat-icon" />
-                      <span>{study.participants.toLocaleString()}</span>
-                    </span>
-                    <span className="study-duration">{study.duration}</span>
+                    <p className="metric-value">65% Complete</p>
                   </div>
-                  <p className="study-compensation">{study.compensation} ICP</p>
+                  <div className="metric">
+                    <p className="metric-label">Data Quality</p>
+                    <div className="rating">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star
+                          key={i}
+                          className={`star ${i <= 4 ? 'star-filled' : 'star-empty'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="metric">
+                    <p className="metric-label">Last Updated</p>
+                    <p className="metric-value">2 hours ago</p>
+                  </div>
+                </div>
+                <div className="study-actions">
+                  <button className="study-action-btn study-action-blue">
+                    View Details
+                  </button>
+                  <button className="study-action-btn study-action-green">
+                    Export Data
+                  </button>
+                  <button className="study-action-btn study-action-purple">
+                    Analytics
+                  </button>
+
+                  {createdStudies.some(s => s.id === study.id) && (
+  <button
+    className="study-action-btn study-action-red"
+    onClick={() => {
+      const updated = createdStudies.filter(s => s.id !== study.id);
+      setCreatedStudies(updated);
+      localStorage.setItem('createdStudies', JSON.stringify(updated));
+    }}
+  >
+    Delete
+  </button>
+)}
+
                 </div>
               </div>
-            ))}
+            )}
+          </div>
+          <div className="study-info">
+            <div className="study-stats">
+              <span className="study-stat">
+                <Users className="study-stat-icon" />
+                <span>{study.participants.toLocaleString()}</span>
+              </span>
+              <span className="study-duration">{study.duration}</span>
+            </div>
+            <p className="study-compensation">{study.compensation} ICP</p>
           </div>
         </div>
-      </div>
+      ))}
+    </div>
+  </div>
+</div>
+
     </div>
   );
 
@@ -507,101 +625,105 @@ const ResearcherDashboard = () => {
         </div>
       </div>
 
-      {/* Detailed Analytics */}
-      <div className="card">
-        <h3>Category Analysis</h3>
-        <div className="category-analysis">
-          {analyticsData.map((item, index) => (
-            <div key={index} className="category-item">
-              <div className="category-header">
-                <h4>{item.category}</h4>
-                <div className="category-stats">
-                  <span>{item.patients.toLocaleString()} patients</span>
-                  <span>Avg. Age: {item.avgAge}</span>
-                  <span className={`quality-badge quality-${item.quality.toLowerCase()}`}>
-                    {item.quality} Quality
-                  </span>
-                </div>
-              </div>
-              <div className="category-details">
-                <span>Completion: {item.completion}%</span>
-                <button className="view-details-btn">View Details →</button>
-              </div>
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
-                  style={{ width: `${item.completion}%` }}
-                ></div>
-              </div>
-            </div>
-          ))}
+    {/* Detailed Analytics */}
+<div className="card">
+  <h3>Category Analysis</h3>
+  <div className="category-analysis">
+    {analyticsData.map((item, index) => (
+      <div key={index} className="category-item">
+        <div className="category-header">
+          <h4>{item.category}</h4>
+          <div className="category-stats">
+            <span>{item.patients.toLocaleString()} patients</span>
+            <span>Avg. Age: {item.avgAge}</span>
+            <span className={`quality-badge quality-${item.quality.toLowerCase()}`}>
+              {item.quality} Quality
+            </span>
+          </div>
+        </div>
+
+        <div className="category-details">
+          <span>Completion: {item.completion}%</span>
+          <button className="view-details-btn">View Details →</button>
+        </div>
+
+        <div className="progress-bar">
+          <div 
+            className="progress-fill" 
+            style={{ width: `${item.completion}%` }}
+          ></div>
         </div>
       </div>
+    ))}
+  </div>
+</div>
+
     </div>
   );
 
-  const renderDataRequestsTab = () => (
-    <div className="tab-content">
-      <div className="tab-header">
-        <h2>Data Requests</h2>
-        <button 
-          onClick={() => setModal('dataSearch')}
-          className="btn-primary"
-        >
-          <Search className="btn-icon" />
-          <span>New Request</span>
-        </button>
-      </div>
+const renderDataRequestsTab = () => (
+  <div className="tab-content">
+    <div className="tab-header">
+      <h2>Data Requests</h2>
+      <button 
+        onClick={() => setModal('dataSearch')}
+        className="btn-primary"
+      >
+        <Search className="btn-icon" />
+        <span>New Request</span>
+      </button>
+    </div>
 
-      <div className="card">
-        <div className="requests-list">
-          {researcherDataRequests.map((req, index) => (
-            <div key={req.id} className="request-item">
-              <div className="request-main">
-                <div className="request-header">
-                  <h4 className="request-name">{req.requesterName}</h4>
-                  <span className={`status-badge status-${req.status.replace(' ', '-')}`}>
-                    {req.status}
-                  </span>
-                </div>
+    <div className="card">
+      <div className="requests-list">
+        {researcherDataRequests.map((req) => (
+          <div key={req.id} className="request-item">
+            <div className="request-main">
+              <div className="request-header">
+                <h4 className="request-name">{req.requesterName}</h4>
+                <span className={`status-badge status-${req.status.replace(' ', '-').toLowerCase()}`}>
+                  {req.status}
+                </span>
+              </div>
+              <p className="request-detail">
+                <strong>Requested:</strong> {req.dataSourcesRequested.join(', ')}
+              </p>
+              {req.dataSourcesReceived.length > 0 && (
                 <p className="request-detail">
-                  <strong>Requested:</strong> {req.dataSourcesRequested.join(', ')}
+                  <strong>Received:</strong> {req.dataSourcesReceived.join(', ')}
                 </p>
-                {req.dataSourcesReceived.length > 0 && (
-                  <p className="request-detail">
-                    <strong>Received:</strong> {req.dataSourcesReceived.join(', ')}
-                  </p>
-                )}
-                <div className="request-meta">
-                  <span>{req.date}</span>
-                  <span className="request-compensation">{req.compensation} ICP</span>
-                </div>
-              </div>
-              <div className="request-actions">
-                {req.dataSourcesReceived.length > 0 && (
-                  <button className="request-action-btn">
-                    <Download className="request-action-icon" />
-                  </button>
-                )}
-                <button className="request-action-btn">
-                  <Eye className="request-action-icon" />
-                </button>
-              </div>
-              
-              {req.status === 'pending' && (
-                <div className="request-status">
-                  <div className="request-status-content">
-                    <Clock className="request-status-icon" />
-                    <span>Waiting for patient approval</span>
-                  </div>
-                </div>
               )}
+              <div className="request-meta">
+                <span>{req.date}</span>
+                <span className="request-compensation">{req.compensation} ICP</span>
+              </div>
             </div>
-          ))}
-        </div>
+            
+            <div className="request-actions">
+              {req.dataSourcesReceived.length > 0 && (
+                <button className="request-action-btn">
+                  <Download className="request-action-icon" />
+                </button>
+              )}
+              <button className="request-action-btn">
+                <Eye className="request-action-icon" />
+              </button>
+            </div>
+
+            {req.status.toLowerCase() === 'pending' && (
+              <div className="request-status">
+                <div className="request-status-content">
+                  <Clock className="request-status-icon" />
+                  <span>Waiting for patient approval</span>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
-  );
+  </div>
+);
 
   return (
     <div className="dashboard">
@@ -849,6 +971,35 @@ const ResearcherDashboard = () => {
                   className="form-input"
                 />
               </div>
+              <div className="form-group">
+  <label className="form-label">Select Collaborators</label>
+  <input
+    type="text"
+    value={searchCollaborators}
+    onChange={(e) => setSearchCollaborators(e.target.value)}
+    placeholder="Search collaborators..."
+    className="form-input"
+  />
+
+  <div className="collaborator-list">
+    {collaborators
+      .filter(user =>
+        (user.role === 'provider' || user.role === 'researcher') &&
+        user.name.toLowerCase().includes(searchCollaborators.toLowerCase())
+      )
+      .map(user => (
+        <label key={user.principal?.toString()} className="checkbox-item">
+          <input
+            type="checkbox"
+            checked={collaborationForm.collaborators.includes(user.principal)}
+            onChange={() => toggleCollaborator(user.principal)}
+            className="checkbox-input"
+          />
+          <span className="checkbox-label">{user.name} ({user.role})</span>
+        </label>
+      ))}
+  </div>
+</div>
 
               <div className="form-group">
                 <label className="form-label">Data Types of Interest</label>
@@ -909,80 +1060,117 @@ const ResearcherDashboard = () => {
         </div>
       )}
 
-      {/* New Study Modal */}
-      {modal === 'newStudy' && (
-        <div className="modal-overlay">
-          <div className="modal modal-medium">
-            <div className="modal-header">
-              <h2>Create New Study</h2>
-              <button
-                onClick={() => setModal(null)}
-                className="modal-close"
-              >
-                <X className="close-icon" />
-              </button>
-            </div>
-            
-            <div className="modal-body">
-              <div className="form-group">
-                <label className="form-label">Study Title</label>
-                <input
-                  type="text"
-                  placeholder="Enter study title"
-                  className="form-input"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label className="form-label">Description</label>
-                <textarea
-                  rows={4}
-                  placeholder="Describe your research study..."
-                  className="form-textarea"
-                />
-              </div>
+{/* New Study Modal */}
+{modal === 'newStudy' && (
+  <div className="modal-overlay">
+    <div className="modal modal-medium">
+      <div className="modal-header">
+        <h2>Create New Study</h2>
+        <button
+          onClick={() => setModal(null)}
+          className="modal-close"
+        >
+          <X className="close-icon" />
+        </button>
+      </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Target Participants</label>
-                  <input
-                    type="number"
-                    placeholder="1000"
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Duration</label>
-                  <select className="form-select">
-                    <option>3 months</option>
-                    <option>6 months</option>
-                    <option>1 year</option>
-                    <option>2 years</option>
-                  </select>
-                </div>
-              </div>
+      <div className="modal-body">
+        <div className="form-group">
+          <label className="form-label">Study Title</label>
+          <input
+            id="study-title"
+            type="text"
+            placeholder="Enter study title"
+            className="form-input"
+            value={newStudyForm.title}
+            onChange={(e) => setNewStudyForm({ ...newStudyForm, title: e.target.value })}
+          />
+        </div>
 
-              <div className="modal-footer">
-                <button
-                  onClick={() => setModal(null)}
-                  className="btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    alert('Study created successfully!');
-                    setModal(null);
-                  }}
-                  className="btn-primary"
-                >
-                  Create Study
-                </button>
-              </div>
-            </div>
+        <div className="form-group">
+          <label className="form-label">Description</label>
+          <textarea
+            id="study-description"
+            rows={4}
+            placeholder="Describe your research study..."
+            className="form-textarea"
+            value={newStudyForm.description}
+            onChange={(e) => setNewStudyForm({ ...newStudyForm, description: e.target.value })}
+          />
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Target Participants</label>
+            <input
+              id="study-participants"
+              type="number"
+              placeholder="1000"
+              className="form-input"
+              value={newStudyForm.participants}
+              onChange={(e) => setNewStudyForm({ ...newStudyForm, participants: e.target.value })}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Duration</label>
+            <select
+              id="study-duration"
+              className="form-select"
+              value={newStudyForm.duration}
+              onChange={(e) => setNewStudyForm({ ...newStudyForm, duration: e.target.value })}
+            >
+              <option>3 months</option>
+              <option>6 months</option>
+              <option>1 year</option>
+              <option>2 years</option>
+            </select>
           </div>
         </div>
-      )}
+
+        <div className="modal-footer">
+          <button
+            onClick={() => setModal(null)}
+            className="btn-secondary"
+          >
+            Cancel
+          </button>
+          <button
+            className="btn-primary"
+            disabled={!newStudyForm.title || !newStudyForm.description}
+            onClick={() => {
+              const newStudy = {
+                id: Date.now().toString(),
+                title: newStudyForm.title,
+                description: newStudyForm.description,
+                participants: newStudyForm.participants,
+                duration: newStudyForm.duration,
+                compensation: Math.floor(Math.random() * 10 + 1),
+                status: 'active',
+                createdAt: new Date().toISOString()
+              };
+
+              const updatedStudies = [newStudy, ...createdStudies];
+              setCreatedStudies(updatedStudies);
+              localStorage.setItem('createdStudies', JSON.stringify(updatedStudies));
+
+              // Reset form & close modal
+              setNewStudyForm({
+                title: '',
+                description: '',
+                participants: '',
+                duration: '6 months'
+              });
+              setModal(null);
+            }}
+          >
+            Create Study
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };

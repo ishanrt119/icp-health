@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,forwardRef,useImperativeHandle } from 'react';
 import './myUploads.css';
 import { createActor } from '../../../../declarations/icp-health-backend'; // ✅ your correct path
 import { AuthClient } from "@dfinity/auth-client";
@@ -9,26 +9,40 @@ const canisterId = import.meta.env.VITE_CANISTER_ID_ICP_HEALTH_BACKEND; // ✅ y
 
 
 
-const MyUploadsTable = () => {
+const MyUploadsTable = forwardRef(({ onUploadCountChange, onEarningsChange }, ref) => {
   const [uploads, setUploads] = useState([]);
   const [errorOccurred, setErrorOccurred] = useState(false);
   const [loading, setLoading] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(null);
 
   const fetchUploads = async () => {
-  try {
-    setLoading(true);
-    const actor = await getActor();
-    const data = await actor.get_my_uploads();
-    setUploads(data);
-    setErrorOccurred(false);
-  } catch (err) {
-    console.error("Error fetching uploads:", err);
-    setErrorOccurred(true);
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+      const actor = await getActor();
+      const data = await actor.get_my_uploads();
+      setUploads(data);
+      setErrorOccurred(false);
+   if (onUploadCountChange) {
+  onUploadCountChange(data.length); // Total document count
+}
+
+if (onEarningsChange) {
+  const total = data.reduce((sum, item) => sum + Number(item.earning_icp || 0), 0);
+  onEarningsChange(total);
+}
+ // <-- Send count to parent
+    } catch (err) {
+      console.error("Error fetching uploads:", err);
+      setErrorOccurred(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useImperativeHandle(ref, () => ({
+  refreshUploads: fetchUploads
+}));
+
 
   useEffect(() => {
     fetchUploads();
@@ -179,8 +193,8 @@ const MyUploadsTable = () => {
         </table>
       )}
     </div>
-    </div>
+  </div>
   );
-};
+});
 
 export default MyUploadsTable;

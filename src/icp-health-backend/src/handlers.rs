@@ -92,6 +92,22 @@ pub fn get_my_uploads() -> Vec<UploadBlock> {
     })
 }
 
+pub fn get_all_collaborators() -> Vec<UserPublic> {
+    USERS.with(|users| {
+        users
+            .borrow()
+            .iter()
+            .filter(|(_, u)| u.role == "provider" || u.role == "researcher")
+            .map(|(p, u)| UserPublic {
+                name: u.name.clone(),
+                email: u.email.clone(),
+                role: u.role.clone(),
+                principal: Some(*p),
+            })
+            .collect()
+    })
+}
+
 pub fn delete_upload(hash: String) -> Result<(), String> {
     let principal = caller();
     UPLOAD_CHAINS.with(|chains| {

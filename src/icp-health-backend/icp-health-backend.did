@@ -10,6 +10,14 @@ service : {
     }
   ) query;
 
+  get_all_collaborators: () -> (
+    vec record {
+      name : text;
+      email : text;
+      role : text;
+    }
+  ) query;
+
   // Upload & document handling
   upload_document: (
     text, // file_name

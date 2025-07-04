@@ -45,6 +45,11 @@ fn upload_document(
     handlers::upload_document(file_name, doc_type, subtype, file_content, doctor_name)
 }
 
+#[query]
+fn get_all_collaborators() -> Vec<UserPublic> {
+    handlers::get_all_collaborators()
+}
+
 
 #[update]
 fn delete_upload(hash: String) -> Result<(), String> {

@@ -190,18 +190,7 @@ const dataAccess = patientData.length;
         </div>
       </div>
 
-      {/* Security Section */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center space-x-2 mb-4">
-          <Shield className="h-5 w-5 text-green-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Security & Compliance</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="info-box green"><CheckCircle className="icon" /> HIPAA Compliant</div>
-          <div className="info-box blue"><Shield className="icon" /> Encrypted Blockchain</div>
-          <div className="info-box yellow"><AlertCircle className="icon" /> Audit Trail Enabled</div>
-        </div>
-      </div>
+      
 
       {/* Modals */}
       {modal === 'download' && (
