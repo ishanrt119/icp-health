@@ -2,52 +2,55 @@ import React, { useState } from 'react';
 import { User, Shield, Bell, Settings, Search, ArrowLeft } from 'lucide-react';
 import './header.css';
 
-const Header = ({
-  currentUser = {},
-  onUserSwitch,
-  onBackToLanding,
-  onMyUploadsClick,
-  onNewResearchClick
-}) => {
+const Header = ({ currentUser = {}, onUserSwitch, onBackToLanding, onMyUploadsClick }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const getRoleColor = (role) => {
     switch (role) {
-      case 'patient': return 'bg-blue-100';
-      case 'provider': return 'bg-green-100';
-      case 'researcher': return 'bg-purple-100';
-      default: return 'bg-gray-100';
+      case 'patient':
+        return 'bg-blue-100';
+      case 'provider':
+        return 'bg-green-100';
+      case 'researcher':
+        return 'bg-purple-100';
+      default:
+        return 'bg-gray-100';
     }
   };
 
   const getRoleName = (role) => {
     switch (role) {
-      case 'patient': return 'Patient';
-      case 'provider': return 'Provider';
-      case 'researcher': return 'Researcher';
-      default: return 'Unknown';
+      case 'patient':
+        return 'Patient';
+      case 'provider':
+        return 'Provider';
+      case 'researcher':
+        return 'Researcher';
+      default:
+        return 'Unknown';
     }
   };
 
   const getSearchPlaceholder = (role) => {
     switch (role) {
-      case 'patient': return 'Search records...';
-      case 'provider': return 'Search patients...';
-      case 'researcher': return 'Search studies...';
-      default: return 'Search...';
+      case 'patient':
+        return 'Search records...';
+      case 'provider':
+        return 'Search patients...';
+      case 'researcher':
+        return 'Search studies...';
+      default:
+        return 'Search...';
     }
+  };
+
+  const getDisplayName = () => {
+    return currentUser?.name || 'N/A';
   };
 
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
-  };
-
-  // Get display name - prioritize name, fallback to email, then role
-  const getDisplayName = () => {
-    if (currentUser.name) return currentUser.name;
-    if (currentUser.email) return currentUser.email;
-    return `${getRoleName(currentUser.role)} User`;
   };
 
   return (
@@ -74,17 +77,18 @@ const Header = ({
         </div>
       </div>
 
-      {/* Right: Actions and User Info */}
+      {/* Right: My Uploads + Icons + Dropdown */}
       <div className="header-right">
-        {/* Patient-Specific */}
         {currentUser.role === 'patient' && (
           <div className="my-upload-link" onClick={onMyUploadsClick}>
             <button className="my-uploads-button">My Uploads</button>
           </div>
         )}
 
-        <Bell className="action-icon" size={18} />
-        <Settings className="action-icon" size={18} />
+        <div className="action-icons">
+          <Bell className="action-icon" size={18} />
+          <Settings className="action-icon" size={18} />
+        </div>
 
         <div className="user-info" onClick={toggleDropdown}>
           <div className="user-avatar">
@@ -96,18 +100,27 @@ const Header = ({
 
           {dropdownOpen && (
             <div className="dropdown-menu">
-              <div className="profile-section">
-                <h4>My Profile</h4>
-                <div className="profile-details">
-                  <p><strong>Name:</strong> {getDisplayName()}</p>
-                  <p><strong>Role:</strong> {getRoleName(currentUser.role)}</p>
-                  {currentUser.email && (
-                    <p><strong>Email:</strong> {currentUser.email}</p>
-                  )}
-                  {currentUser.id && (
-                    <p><strong>ID:</strong> {currentUser.id}</p>
-                  )}
+              <div className="profile-details">
+                <div className="profile-detail-item">
+                  <span className="detail-label">Name:</span>
+                  <span className="detail-value">{getDisplayName()}</span>
                 </div>
+                <div className="profile-detail-item">
+                  <span className="detail-label">Role:</span>
+                  <span className="detail-value">{getRoleName(currentUser?.role)}</span>
+                </div>
+                {currentUser?.email && (
+                  <div className="profile-detail-item">
+                    <span className="detail-label">Email:</span>
+                    <span className="detail-value">{currentUser.email}</span>
+                  </div>
+                )}
+                {currentUser?.id && (
+                  <div className="profile-detail-item">
+                    <span className="detail-label">ID:</span>
+                    <span className="detail-value">{currentUser.id}</span>
+                  </div>
+                )}
               </div>
               <hr />
               <button className="logout-btn" onClick={onBackToLanding}>

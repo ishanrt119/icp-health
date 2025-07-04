@@ -79,6 +79,7 @@ const MyUploadsTable = () => {
   };
 
   return (
+    <div className="outer-wrapper">
     <div className="uploads-table-wrapper">
       <h3>My Uploaded Documents</h3>
 
@@ -177,6 +178,7 @@ const MyUploadsTable = () => {
           </tbody>
         </table>
       )}
+    </div>
     </div>
   );
 };

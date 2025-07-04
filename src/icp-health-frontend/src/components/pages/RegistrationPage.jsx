@@ -51,51 +51,70 @@ const RegistrationPage = ({ principal, onRegistered, onBack }) => {
   };
 
   return (
-    <div className="registration-container">
-      <div className="registration-card">
-        <h2>Complete Your Registration</h2>
-        <form onSubmit={handleSubmit}>
-          <label>Full Name</label>
-          <input
-            type="text"
-            name="name"
-            required
-            value={formData.name}
-            onChange={handleChange}
-          />
-
-          <label>Email Address</label>
-          <input
-            type="email"
-            name="email"
-            required
-            value={formData.email}
-            onChange={handleChange}
-          />
-
-          <label>User Role</label>
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            required
-          >
-            <option value="patient">Patient</option>
-            <option value="provider">Healthcare Provider</option>
-            <option value="researcher">Researcher</option>
-          </select>
-
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Registering...' : 'Register'}
-           
-          </button>
-
-          <button type="button" onClick={onBack} className="back-button">
-            ← Login
-          </button>
-        </form>
+    <div className="register-container">
+  <div className="register-card">
+    <div className="register-header">
+      <div className="register-logo">
+        <span className="register-logo-icon">👤</span>
       </div>
+      <h2 className="register-title">Complete Your Registration</h2>
+      <p className="register-subtitle">Join the Health Data Exchange</p>
     </div>
+
+    <form onSubmit={handleSubmit} className="register-form">
+      <div className="form-group floating-label">
+        <input
+          type="text"
+          name="name"
+          required
+          placeholder=" "
+          value={formData.name}
+          onChange={handleChange}
+          className="form-input"
+        />
+        <label className="form-label">Full Name</label>
+      </div>
+
+      <div className="form-group floating-label">
+        <input
+          type="email"
+          name="email"
+          required
+          placeholder=" "
+          value={formData.email}
+          onChange={handleChange}
+          className="form-input"
+        />
+        <label className="form-label">Email Address</label>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">User Role</label>
+        <select
+          name="role"
+          value={formData.role}
+          onChange={handleChange}
+          required
+          className="form-input"
+        >
+          <option value="patient">Patient</option>
+          <option value="provider">Healthcare Provider</option>
+          <option value="researcher">Researcher</option>
+        </select>
+      </div>
+
+      <button type="submit" className={`register-submit-btn ${isSubmitting ? 'loading' : ''}`} disabled={isSubmitting}>
+        {isSubmitting ? '' : 'Register'}
+      </button>
+
+      <div className="login-link">
+        <p>Already have an account?</p>
+        <a onClick={onBack} style={{ cursor: 'pointer' }}>← Back to Login</a>
+      </div>
+    </form>
+  </div>
+</div>
+
   );
 };
 
