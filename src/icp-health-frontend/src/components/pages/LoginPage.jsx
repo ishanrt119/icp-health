@@ -4,9 +4,10 @@ import { AuthClient } from "@dfinity/auth-client";
 import { Actor, HttpAgent } from '@dfinity/agent';
 import { idlFactory } from '../../../../declarations/icp-health-backend';
 
+
 const canisterId = import.meta.env.VITE_CANISTER_ID_ICP_HEALTH_BACKEND;
 
-const LoginPage = ({ onLogin }) => {
+const LoginPage = ({ onLogin,onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -126,6 +127,9 @@ const LoginPage = ({ onLogin }) => {
       <div className="login-right">
         <div className="login-form-container">
           <div className="login-header">
+            <button className="back-button" onClick={onBack}>
+    ← Back
+  </button>
             <h2 className="login-title">Welcome Back</h2>
             <p className="login-subtitle">
               Sign in to access your health data vault and start managing your medical records securely.

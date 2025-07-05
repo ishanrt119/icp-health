@@ -92,7 +92,7 @@ function App() {
 
   // Login page
   if (!isLoggedIn && currentView === 'login') {
-    return <LoginPage onLogin={handleLogin} />;
+    return <LoginPage onLogin={handleLogin} onBack={handleBackToLanding} />;
   }
 
   // Landing page

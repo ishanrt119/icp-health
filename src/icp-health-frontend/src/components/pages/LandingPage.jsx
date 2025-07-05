@@ -404,7 +404,7 @@ const LandingPage = ({onLoginClick,onDemoLogin}) => {
                   <Phone className="contact-icon" />
                   <div>
                     <h4>Phone</h4>
-                    <p>+91-8459569585</p>
+                    <p>+91-8458745632</p>
                   </div>
                 </div>
                 

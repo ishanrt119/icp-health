@@ -891,3 +891,21 @@
 .login-right::-webkit-scrollbar-thumb:hover {
   background: var(--color-gray-400);
 }
+
+.back-button {
+  background: transparent;
+  border: none;
+  color: #4b5563; /* Gray-700 */
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.3s ease;
+}
+
+.back-button:hover {
+  color: #2563eb; /* Blue-600 */
+  text-decoration: underline;
+}
