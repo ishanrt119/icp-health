@@ -72,27 +72,35 @@ const [collaborators, setCollaborators] = useState([]);
 const [searchCollaborators, setSearchCollaborators] = useState('');
 
 useEffect(() => {
- const fetchCollaborators = async () => {
-  try {
-    const collaborators = await icp_health_backend.get_all_collaborators();
-    console.log("Collaborators:", collaborators);
-    setCollaborators(collaborators);
-  } catch (err) {
-    console.error("Error fetching collaborators:", err);
-  }
-};
+  const fetchCollaborators = async () => {
+    try {
+      const collaborators = await icp_health_backend.get_all_collaborators();
+      console.log("Fetched collaborators:", collaborators); // <== check this
+      setCollaborators(collaborators);
+    } catch (err) {
+      console.error("Error fetching collaborators:", err);
+    }
+  };
   fetchCollaborators();
 }, []);
 
 
-const toggleCollaborator = (principal) => {
-  setCollaborationForm((prev) => ({
-    ...prev,
-    collaborators: prev.collaborators.includes(principal)
-      ? prev.collaborators.filter((p) => p !== principal)
-      : [...prev.collaborators, principal],
-  }));
+
+const toggleCollaborator = (email) => {
+  setCollaborationForm((prevForm) => {
+    const isSelected = prevForm.collaborators.includes(email);
+    const updated = isSelected
+      ? prevForm.collaborators.filter(e => e !== email)
+      : [...prevForm.collaborators, email];
+
+    return {
+      ...prevForm,
+      collaborators: updated,
+    };
+  });
 };
+
+
 
   const [expandedStudy, setExpandedStudy] = useState(null);
   const [notifications, setNotifications] = useState([
@@ -984,22 +992,32 @@ const renderDataRequestsTab = () => (
   <div className="collaborator-list">
     {collaborators
       .filter(user =>
+        user &&
+        user.name &&
+        user.email &&
+        user.role &&
         (user.role === 'provider' || user.role === 'researcher') &&
-        user.name.toLowerCase().includes(searchCollaborators.toLowerCase())
+        user.name.toLowerCase().includes(searchCollaborators.trim().toLowerCase())
       )
-      .map(user => (
-        <label key={user.principal?.toString()} className="checkbox-item">
-          <input
-            type="checkbox"
-            checked={collaborationForm.collaborators.includes(user.principal)}
-            onChange={() => toggleCollaborator(user.principal)}
-            className="checkbox-input"
-          />
-          <span className="checkbox-label">{user.name} ({user.role})</span>
-        </label>
-      ))}
+      .map(user => {
+        const { name, email, role } = user;
+
+        return (
+          <label key={email} className="checkbox-item">
+            <input
+              type="checkbox"
+              name={`collab-${email}`}
+              checked={collaborationForm.collaborators.includes(email)}
+              onChange={() => toggleCollaborator(email)}
+              className="checkbox-input"
+            />
+            <span className="checkbox-label">{name} ({role})</span>
+          </label>
+        );
+      })}
   </div>
 </div>
+
 
               <div className="form-group">
                 <label className="form-label">Data Types of Interest</label>
