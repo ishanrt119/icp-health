@@ -71,6 +71,7 @@ function App() {
           <ResearcherDashboard
             showModal={showResearchModal}
             setShowModal={setShowResearchModal}
+            currentUser={currentUser}
           />
         );
       default:

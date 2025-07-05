@@ -45,13 +45,15 @@ import './researcher.css';
 import { Principal } from '@dfinity/principal';
 import { icp_health_backend } from '../../../../declarations/icp-health-backend';
 
-const ResearcherDashboard = () => {
+const ResearcherDashboard = ({ currentUser, showModal, setShowModal }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [modal, setModal] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedSources, setSelectedSources] = useState([]);
   const [compensation, setCompensation] = useState('');
+  const [collaborationRequest, setCollaborationRequest] = useState([]);
+
   const [filters, setFilters] = useState({
     ageRange: '',
     gender: '',
@@ -193,6 +195,21 @@ const [newStudyForm, setNewStudyForm] = useState({
     resetSearchForm();
   };
 
+  useEffect(() => {
+  const fetchRequests = async () => {
+    if (typeof icp_health_backend.get_all_requests_for_user !== 'function') {
+      console.warn('get_all_requests_for_user not implemented');
+      return;
+    }
+
+    const data = await icp_health_backend.get_all_requests_for_user(currentUser?.email);
+    setCollaborationRequests(data);
+  };
+
+  fetchRequests();
+}, []);
+
+
   const resetSearchForm = () => {
     setSearchQuery('');
     setSearchResults([]);
@@ -207,23 +224,51 @@ const [newStudyForm, setNewStudyForm] = useState({
     });
   };
 
-  const handleCollaborationSubmit = () => {
-    if (!collaborationForm.institution || !collaborationForm.contactEmail || !collaborationForm.studyTitle) {
-      alert('Please fill all required fields');
-      return;
-    }
-    
-    console.log('Submitting collaboration request:', collaborationForm);
-    alert('Collaboration request sent successfully! We will contact you within 2-3 business days.');
-    setModal(null);
-    setCollaborationForm({
-      institution: '',
-      contactEmail: '',
-      studyTitle: '',
-      message: '',
-      dataTypes: []
-    });
+  useEffect(() => {
+  const savedRequests = localStorage.getItem('collabRequests');
+  if (savedRequests) {
+    setCollaborationRequest(JSON.parse(savedRequests));
+  }
+}, []);
+
+ const handleCollaborationSubmit = () => {
+  if (!collaborationForm.institution || !collaborationForm.contactEmail || !collaborationForm.studyTitle) {
+    alert('Please fill all required fields');
+    return;
+  }
+
+  const newRequest = {
+    id: Date.now(),
+    from: currentUser?.name || 'Anonymous',
+    to: collaborationForm.collaborators.join(', '), // <-- Add this line
+    study: collaborationForm.studyTitle,
+    message: collaborationForm.message || '',
+    collaborators: collaborationForm.collaborators,
+    institution: collaborationForm.institution,
+    email: collaborationForm.contactEmail,
+    dataTypes: collaborationForm.dataTypes,
+    type: 'sent',
   };
+
+  const updatedRequests = [...collaborationRequest, newRequest];
+  setCollaborationRequest(updatedRequests);
+  localStorage.setItem('collabRequests', JSON.stringify(updatedRequests));
+
+  setCollaborationForm({
+    institution: '',
+    contactEmail: '',
+    studyTitle: '',
+    message: '',
+    dataTypes: [],
+    collaborators: [],
+  });
+
+  setShowModal(false);
+  alert('Collaboration request sent successfully!');
+};
+
+
+
 
   const toggleDataType = (dataType) => {
     setCollaborationForm(prev => ({
@@ -294,7 +339,7 @@ const renderOverviewTab = () => (
   title="Active Studies"
   value={createdStudies.length}
   icon={Database}
-  trend={{ value: `+${createdStudies.length} total`, isPositive: true }}
+  trend={`{ value: +${createdStudies.length} total, isPositive: true }`}
   color="purple"
 />
 
@@ -428,27 +473,41 @@ const renderOverviewTab = () => (
 
       {/* Collaboration Requests */}
       <div className="card">
-        <h3>Collaboration Requests</h3>
-        <div className="collaboration-list">
-          {collaborationRequests.map((request) => (
-            <div key={request.id} className="collaboration-item">
-              <div className="collaboration-content">
-                <p className="collaboration-from">{request.from}</p>
-                <p className="collaboration-study">{request.study}</p>
-                <p className="collaboration-message">{request.message}</p>
-              </div>
-              <div className="collaboration-actions">
-                <button className="collaboration-btn collaboration-btn-approve">
-                  <CheckCircle className="collaboration-icon" />
-                </button>
-                <button className="collaboration-btn collaboration-btn-reject">
-                  <X className="collaboration-icon" />
-                </button>
-              </div>
-            </div>
-          ))}
+  <h3>Collaboration Requests</h3>
+  <div className="collaboration-list">
+    {collaborationRequest.map((request) => (
+      <div key={request.id} className="collaboration-item">
+        <div className="collaboration-content">
+          <p className="collaboration-from">
+  {request.type === 'sent' 
+    ? `To: ${request.to}` 
+    : `From: ${request.from}`}
+  <span className="request-type-tag">
+    {request.type === 'sent' ? ' (Sent)' : ' (Received)'}
+  </span>
+</p>
+
+          <p className="collaboration-study">{request.study}</p>
+          <p className="collaboration-message">{request.message}</p>
         </div>
+
+        {/* Only show buttons for "received" requests */}
+        {request.type !== 'sent' && (
+          <div className="collaboration-actions">
+            <button className="collaboration-btn collaboration-btn-approve">
+              <CheckCircle className="collaboration-icon" />
+            </button>
+            <button className="collaboration-btn collaboration-btn-reject">
+              <X className="collaboration-icon" />
+            </button>
+          </div>
+        )}
       </div>
+    ))}
+  </div>
+</div>
+
+
     </div>
   </div>
 );
@@ -470,98 +529,98 @@ const renderOverviewTab = () => (
      <div className="studies-container">
   <div className="card">
     <div className="studies-list">
-      {[...createdStudies, ...researchStudies].map((study) => (
-        <div key={study.id} className="study-item">
-          <div className="study-main">
-            <div className="study-header">
-              <button
-                onClick={() =>
-                  setExpandedStudy(expandedStudy === study.id ? null : study.id)
-                }
-                className="expand-btn"
-              >
-                {expandedStudy === study.id ? (
-                  <ChevronDown className="expand-icon" />
-                ) : (
-                  <ChevronRight className="expand-icon" />
-                )}
-              </button>
-              <h4 className="study-title">{study.title}</h4>
-              <span className={`status-badge status-${study.status}`}>
-                {study.status}
-              </span>
-            </div>
-            <p className="study-description">{study.description}</p>
+{[...createdStudies, ...researchStudies].map((study) => (
+  <div key={study.id} className="study-item">
+    <div className="study-main">
+      <div className="study-header">
+        <button
+          onClick={() =>
+            setExpandedStudy(expandedStudy === study.id ? null : study.id)
+          }
+          className="expand-btn"
+        >
+          {expandedStudy === study.id ? (
+            <ChevronDown className="expand-icon" />
+          ) : (
+            <ChevronRight className="expand-icon" />
+          )}
+        </button>
+        <h4 className="study-title">{study.title}</h4>
+        <span className={`status-badge status-${study.status}`}>
+          {study.status}
+        </span>
+      </div>
+      <p className="study-description">{study.description}</p>
 
-            {expandedStudy === study.id && (
-              <div className="study-expanded">
-                <div className="study-metrics">
-                  <div className="metric">
-                    <p className="metric-label">Progress</p>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{ width: '65%' }}
-                      ></div>
-                    </div>
-                    <p className="metric-value">65% Complete</p>
-                  </div>
-                  <div className="metric">
-                    <p className="metric-label">Data Quality</p>
-                    <div className="rating">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star
-                          key={i}
-                          className={`star ${i <= 4 ? 'star-filled' : 'star-empty'}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="metric">
-                    <p className="metric-label">Last Updated</p>
-                    <p className="metric-value">2 hours ago</p>
-                  </div>
-                </div>
-                <div className="study-actions">
-                  <button className="study-action-btn study-action-blue">
-                    View Details
-                  </button>
-                  <button className="study-action-btn study-action-green">
-                    Export Data
-                  </button>
-                  <button className="study-action-btn study-action-purple">
-                    Analytics
-                  </button>
-
-                  {createdStudies.some(s => s.id === study.id) && (
-  <button
-    className="study-action-btn study-action-red"
-    onClick={() => {
-      const updated = createdStudies.filter(s => s.id !== study.id);
-      setCreatedStudies(updated);
-      localStorage.setItem('createdStudies', JSON.stringify(updated));
-    }}
-  >
-    Delete
-  </button>
-)}
-
-                </div>
+      {expandedStudy === study.id && (
+        <div className="study-expanded">
+          <div className="study-metrics">
+            <div className="metric">
+              <p className="metric-label">Progress</p>
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{ width: '65%' }}
+                ></div>
               </div>
-            )}
-          </div>
-          <div className="study-info">
-            <div className="study-stats">
-              <span className="study-stat">
-                <Users className="study-stat-icon" />
-                <span>{study.participants.toLocaleString()}</span>
-              </span>
-              <span className="study-duration">{study.duration}</span>
+              <p className="metric-value">65% Complete</p>
             </div>
-            <p className="study-compensation">{study.compensation} ICP</p>
+            <div className="metric">
+              <p className="metric-label">Data Quality</p>
+              <div className="rating">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star
+                    key={i}
+                    className={`star ${i <= 4 ? 'star-filled' : 'star-empty'}`}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="metric">
+              <p className="metric-label">Last Updated</p>
+              <p className="metric-value">2 hours ago</p>
+            </div>
+          </div>
+          <div className="study-actions">
+            <button className="study-action-btn study-action-blue">
+              View Details
+            </button>
+            <button className="study-action-btn study-action-green">
+              Export Data
+            </button>
+            <button className="study-action-btn study-action-purple">
+              Analytics
+            </button>
+
+            {createdStudies.some(s => s.id === study.id) && (
+              <button
+                className="study-action-btn study-action-red"
+                onClick={() => {
+                  const updated = createdStudies.filter(s => s.id !== study.id);
+                  setCreatedStudies(updated);
+                  localStorage.setItem('createdStudies', JSON.stringify(updated));
+                }}
+              >
+                Delete
+              </button>
+            )}
+
           </div>
         </div>
-      ))}
+      )}
+    </div>
+    <div className="study-info">
+      <div className="study-stats">
+        <span className="study-stat">
+          <Users className="study-stat-icon" />
+          <span>{study.participants.toLocaleString()}</span>
+        </span>
+        <span className="study-duration">{study.duration}</span>
+      </div>
+      <p className="study-compensation">{study.compensation} ICP</p>
+    </div>
+  </div>
+))}
     </div>
   </div>
 </div>
@@ -685,48 +744,50 @@ const renderDataRequestsTab = () => (
     <div className="card">
       <div className="requests-list">
         {researcherDataRequests.map((req) => (
-          <div key={req.id} className="request-item">
-            <div className="request-main">
-              <div className="request-header">
-                <h4 className="request-name">{req.requesterName}</h4>
-                <span className={`status-badge status-${req.status.replace(' ', '-').toLowerCase()}`}>
-                  {req.status}
-                </span>
-              </div>
-              <p className="request-detail">
-                <strong>Requested:</strong> {req.dataSourcesRequested.join(', ')}
-              </p>
-              {req.dataSourcesReceived.length > 0 && (
+          <React.Fragment key={req.id}>
+            <div className="request-item">
+              <div className="request-main">
+                <div className="request-header">
+                  <h4 className="request-name">{req.requesterName}</h4>
+                  <span className={`status-badge status-${req.status.replace(' ', '-').toLowerCase()}`}>
+                    {req.status}
+                  </span>
+                </div>
                 <p className="request-detail">
-                  <strong>Received:</strong> {req.dataSourcesReceived.join(', ')}
+                  <strong>Requested:</strong> {req.dataSourcesRequested.join(', ')}
                 </p>
-              )}
-              <div className="request-meta">
-                <span>{req.date}</span>
-                <span className="request-compensation">{req.compensation} ICP</span>
-              </div>
-            </div>
-            
-            <div className="request-actions">
-              {req.dataSourcesReceived.length > 0 && (
-                <button className="request-action-btn">
-                  <Download className="request-action-icon" />
-                </button>
-              )}
-              <button className="request-action-btn">
-                <Eye className="request-action-icon" />
-              </button>
-            </div>
-
-            {req.status.toLowerCase() === 'pending' && (
-              <div className="request-status">
-                <div className="request-status-content">
-                  <Clock className="request-status-icon" />
-                  <span>Waiting for patient approval</span>
+                {req.dataSourcesReceived.length > 0 && (
+                  <p className="request-detail">
+                    <strong>Received:</strong> {req.dataSourcesReceived.join(', ')}
+                  </p>
+                )}
+                <div className="request-meta">
+                  <span>{req.date}</span>
+                  <span className="request-compensation">{req.compensation} ICP</span>
                 </div>
               </div>
-            )}
-          </div>
+              
+              <div className="request-actions">
+                {req.dataSourcesReceived.length > 0 && (
+                  <button className="request-action-btn">
+                    <Download className="request-action-icon" />
+                  </button>
+                )}
+                <button className="request-action-btn">
+                  <Eye className="request-action-icon" />
+                </button>
+              </div>
+
+              {req.status.toLowerCase() === 'pending' && (
+                <div className="request-status">
+                  <div className="request-status-content">
+                    <Clock className="request-status-icon" />
+                    <span>Waiting for patient approval</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </React.Fragment>
         ))}
       </div>
     </div>
@@ -1004,13 +1065,13 @@ const renderDataRequestsTab = () => (
 
         return (
           <label key={email} className="checkbox-item">
-            <input
-              type="checkbox"
-              name={`collab-${email}`}
-              checked={collaborationForm.collaborators.includes(email)}
-              onChange={() => toggleCollaborator(email)}
-              className="checkbox-input"
-            />
+           <input
+  type="checkbox"
+  name={`collab-${email}`}
+  checked={(collaborationForm.collaborators || []).includes(user.email)}
+  onChange={() => toggleCollaborator(email)}
+  className="checkbox-input"
+/>
             <span className="checkbox-label">{name} ({role})</span>
           </label>
         );
