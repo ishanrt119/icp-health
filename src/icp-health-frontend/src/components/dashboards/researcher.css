@@ -122,6 +122,15 @@
   
 }
 
+
+.request-details-expanded {
+  background: #f9fafb;
+  padding: 1rem;
+  border-left: 4px solid #2563eb;
+  margin: 0.5rem 0 1rem;
+  border-radius: 0.5rem;
+}
+
 .main-content {
   width: 75%;
   margin: 0 auto; /* auto margin left/right centers it */

@@ -66,6 +66,11 @@ const ResearcherDashboard = ({ currentUser, showModal, setShowModal }) => {
   const [selectedSources, setSelectedSources] = useState([]);
   const [compensation, setCompensation] = useState('');
   const [collaborationRequest, setCollaborationRequest] = useState([]);
+  const [researcherDataRequests, setResearcherDataRequests] = useState(() => {
+  const stored = localStorage.getItem('researcherDataRequests');
+  return stored ? JSON.parse(stored) : [];
+});
+const [expandedRequestId, setExpandedRequestId] = useState(null);
 
   function usePrevious(value) {
   const ref = useRef();
@@ -133,6 +138,16 @@ const toggleCollaborator = (email) => {
     { id: 3, type: 'warning', message: 'Data request approval pending for 3 days', time: '1 day ago' }
   ]);
 
+  const [form, setForm] = useState({
+  studyTitle: '',
+  reason: '',
+  ageRange: '',
+  gender: '',
+  dataQuality: '',
+  format: '',
+  deadline: '',
+});
+
   const timeAgo = (timestamp) => {
   const now = new Date();
   const created = new Date(timestamp);
@@ -193,29 +208,57 @@ const [newStudyForm, setNewStudyForm] = useState({
   };
 
   const handleSubmitRequest = () => {
-    if (!compensation || selectedSources.length === 0) {
-      alert('Please fill all required fields');
-      return;
-    }
-    
-    const newRequest = {
-      id: Date.now().toString(),
-      requesterName: 'Current Researcher',
-      requesterType: 'researcher',
-      dataSourcesRequested: selectedSources.map(id => 
-        healthRecords.find(r => r.id === id)?.title || 'Unknown'
-      ),
-      dataSourcesReceived: [],
-      status: 'pending',
-      compensation,
-      date: new Date().toISOString().split('T')[0]
-    };
-    
-    console.log('Submitting request:', newRequest);
-    alert('Data request submitted successfully!');
-    setModal(null);
-    resetSearchForm();
+  const {
+    studyTitle,
+    reason,
+    ageRange,
+    gender,
+    dataQuality,
+    format,
+    deadline
+  } = form;
+
+  if (!studyTitle || !reason || !format || !deadline) {
+    alert('Please fill all required fields: Study Title, Reason, Format, and Deadline');
+    return;
+  }
+
+  const newRequest = {
+    id: Date.now().toString(),
+    requesterName: 'Current Researcher',
+    requesterType: 'researcher',
+    studyTitle,
+    reason,
+    ageRange,
+    gender,
+    dataQuality,
+    format,
+    deadline,
+    dataSourcesRequested: [],          // You can change this based on your flow
+    dataSourcesReceived: [],
+    status: 'pending',
+    compensation: '5',                // Default or input-driven
+    date: new Date().toISOString().split('T')[0]
   };
+
+  const updatedRequests = [...researcherDataRequests, newRequest];
+  setResearcherDataRequests(updatedRequests);
+  localStorage.setItem('researcherDataRequests', JSON.stringify(updatedRequests));
+
+  alert('Data request submitted successfully!');
+  setModal(null);
+  setForm({
+    studyTitle: '',
+    reason: '',
+    ageRange: '',
+    gender: '',
+    dataQuality: '',
+    format: '',
+    deadline: ''
+  });
+};
+
+
 
   useEffect(() => {
   const fetchRequests = async () => {
@@ -230,6 +273,8 @@ const [newStudyForm, setNewStudyForm] = useState({
 
   fetchRequests();
 }, []);
+
+
 
 
   const resetSearchForm = () => {
@@ -272,6 +317,7 @@ const [newStudyForm, setNewStudyForm] = useState({
     type: 'sent',
   };
 
+  
   const updatedRequests = [...collaborationRequest, newRequest];
   setCollaborationRequest(updatedRequests);
   localStorage.setItem('collabRequests', JSON.stringify(updatedRequests));
@@ -397,11 +443,11 @@ const renderOverviewTab = () => (
     {/* Quick Actions */}
     <div className="quick-actions-grid">
       <button
-        onClick={() => setModal('dataSearch')}
+        onClick={() => setModal('dataRequest')}
         className="action-btn action-btn-blue"
       >
         <Search className="action-icon" />
-        <span>Search Data</span>
+        <span>Data Request</span>
       </button>
       <button
         onClick={() => setModal('newStudy')}
@@ -766,8 +812,11 @@ const renderDataRequestTab = (researcherDataRequests, setModal) => (
   <div className="tab-content">
     <div className="tab-header">
       <h2>Data Requests</h2>
-      <button onClick={() => setModal('dataSearch')} className="btn-primary">
-        <Search className="btn-icon" />
+      <button 
+        onClick={() => setModal('dataRequest')}
+        className="btn-primary"
+      >
+        
         <span>New Request</span>
       </button>
     </div>
@@ -830,62 +879,83 @@ const renderDataRequestsTab = () => (
     <div className="tab-header">
       <h2>Data Requests</h2>
       <button 
-        onClick={() => setModal('dataSearch')}
-        className="btn-primary"
-      >
-        <Search className="btn-icon" />
-        <span>New Request</span>
-      </button>
+  onClick={() => setModal('dataRequest')}
+  className="btn btn-primary flex items-center gap-2"
+>
+  <Plus className="btn-icon" />
+  <span>New Request</span>
+</button>
+
     </div>
 
     <div className="card">
       <div className="requests-list">
-        {researcherDataRequests.map((req) => (
-          <React.Fragment key={req.id}>
-            <div className="request-item">
-              <div className="request-main">
-                <div className="request-header">
-                  <h4 className="request-name">{req.requesterName}</h4>
-                  <span className={`status-badge status-${req.status.replace(' ', '-').toLowerCase()}`}>
-                    {req.status}
-                  </span>
-                </div>
-                <p className="request-detail">
-                  <strong>Requested:</strong> {req.dataSourcesRequested.join(', ')}
-                </p>
-                {req.dataSourcesReceived.length > 0 && (
-                  <p className="request-detail">
-                    <strong>Received:</strong> {req.dataSourcesReceived.join(', ')}
-                  </p>
-                )}
-                <div className="request-meta">
-                  <span>{req.date}</span>
-                  <span className="request-compensation">{req.compensation} ICP</span>
-                </div>
-              </div>
-              
-              <div className="request-actions">
-                {req.dataSourcesReceived.length > 0 && (
-                  <button className="request-action-btn">
-                    <Download className="request-action-icon" />
-                  </button>
-                )}
-                <button className="request-action-btn">
-                  <Eye className="request-action-icon" />
-                </button>
-              </div>
+        {researcherDataRequests.length === 0 ? (
+          <p className="empty-state">No requests submitted yet.</p>
+        ) : (
+          researcherDataRequests.map((req) => {
+            const isExpanded = expandedRequestId === req.id;
 
-              {req.status.toLowerCase() === 'pending' && (
-                <div className="request-status">
-                  <div className="request-status-content">
-                    <Clock className="request-status-icon" />
-                    <span>Waiting for patient approval</span>
+            return (
+              <React.Fragment key={req.id}>
+                <div className="request-item">
+                  <div className="request-main">
+                    <div className="request-header">
+                      <h4 className="request-name">{req.studyTitle}</h4>
+                      <span className={`status-badge status-${req.status.replace(' ', '-').toLowerCase()}`}>
+                        {req.status}
+                      </span>
+                    </div>
+
+                    <div className="request-meta">
+                      <span>{req.date}</span>
+                      <span className="request-compensation">{req.compensation || '—'} ICP</span>
+                    </div>
+                  </div>
+                  
+                  <div className="request-actions">
+                    {req.dataSourcesReceived?.length > 0 && (
+                      <button className="request-action-btn">
+                        <Download className="request-action-icon" />
+                      </button>
+                    )}
+                    <button
+                      className="request-action-btn"
+                      onClick={() => setExpandedRequestId(isExpanded ? null : req.id)}
+                    >
+                      <Eye className="request-action-icon" />
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
-          </React.Fragment>
-        ))}
+
+                {/* Expandable Section */}
+                {isExpanded && (
+                  <div className="request-details-expanded">
+                    <p><strong>Reason:</strong> {req.reason}</p>
+                    <p><strong>Format:</strong> {req.format}</p>
+
+                    {req.ageRange && <p><strong>Age Range:</strong> {req.ageRange}</p>}
+                    {req.gender && <p><strong>Gender:</strong> {req.gender}</p>}
+                    {req.dataQuality && <p><strong>Data Quality:</strong> {req.dataQuality}</p>}
+                    
+                    {req.dataSourcesRequested?.length > 0 && (
+                      <p><strong>Requested Data:</strong> {req.dataSourcesRequested.join(', ')}</p>
+                    )}
+                    {req.dataSourcesReceived?.length > 0 && (
+                      <p><strong>Received:</strong> {req.dataSourcesReceived.join(', ')}</p>
+                    )}
+                    {req.status.toLowerCase() === 'pending' && (
+                      <div className="request-status">
+                        <Clock className="request-status-icon" />
+                        <span>Waiting for patient approval</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          })
+        )}
       </div>
     </div>
   </div>
@@ -925,149 +995,125 @@ const renderDataRequestsTab = () => (
 
       {activeTab === 'requests' && renderDataRequestsTab()}
 
-      {/* Advanced Data Search Modal */}
-      {modal === 'dataSearch' && (
-        <div className="modal-overlay">
-          <div className="modal modal-large">
-            <div className="modal-header">
-              <h2>Advanced Data Search</h2>
-              <button
-                onClick={() => setModal(null)}
-                className="modal-close"
-              >
-                <X className="close-icon" />
-              </button>
-            </div>
-            
-            <div className="modal-body">
-              {/* Search and Filters */}
-              <div className="search-filters">
-                <div className="form-group">
-                  <label className="form-label">Search Query</label>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by condition, provider, or document type..."
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Age Range</label>
-                  <select
-                    value={filters.ageRange}
-                    onChange={(e) => setFilters({...filters, ageRange: e.target.value})}
-                    className="form-select"
-                  >
-                    <option value="">All Ages</option>
-                    <option value="18-30">18-30</option>
-                    <option value="31-50">31-50</option>
-                    <option value="51-70">51-70</option>
-                    <option value="70+">70+</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Gender</label>
-                  <select
-                    value={filters.gender}
-                    onChange={(e) => setFilters({...filters, gender: e.target.value})}
-                    className="form-select"
-                  >
-                    <option value="">All Genders</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Data Quality</label>
-                  <select
-                    value={filters.dataQuality}
-                    onChange={(e) => setFilters({...filters, dataQuality: e.target.value})}
-                    className="form-select"
-                  >
-                    <option value="">All Quality Levels</option>
-                    <option value="high">High Quality</option>
-                    <option value="medium">Medium Quality</option>
-                    <option value="low">Low Quality</option>
-                  </select>
-                </div>
-              </div>
+      {/* Data Request Modal */}
+{modal === 'dataRequest' && (
+  <div className="modal-overlay">
+    <div className="modal modal-large">
+      <div className="modal-header">
+        <h2>Request Data Access</h2>
+        <button onClick={() => setModal(null)} className="modal-close">
+          <X className="close-icon" />
+        </button>
+      </div>
 
-              {/* Search Results */}
-              {searchResults.length > 0 && (
-                <div className="search-results">
-                  <h3>Search Results ({searchResults.length} found)</h3>
-                  <div className="results-container">
-                    <div className="results-list">
-                      {searchResults.map((item) => (
-                        <label key={item.id} className="result-item">
-                          <input
-                            type="checkbox"
-                            checked={selectedSources.includes(item.id)}
-                            onChange={() => toggleSourceSelection(item.id)}
-                            className="result-checkbox"
-                          />
-                          <div className="result-content">
-                            <h4 className="result-title">{item.title}</h4>
-                            <p className="result-meta">{item.type} • {item.provider}</p>
-                            <p className="result-description">{item.description}</p>
-                            <div className="result-badges">
-                              <span className="badge badge-blue">
-                                ${item.value}
-                              </span>
-                              <span className="badge badge-green">
-                                High Quality
-                              </span>
-                              <span className="result-date">{item.date}</span>
-                            </div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+      <div className="modal-body">
+        {/* Request Form */}
+        <div className="request-form">
+          <div className="form-group">
+            <label className="form-label">Request Title</label>
+            <input
+              type="text"
+              value={form.studyTitle}
+              onChange={(e) => setForm({ ...form, studyTitle: e.target.value })}
+              placeholder="Enter the title of your request"
+              className="form-input"
+            />
+          </div>
 
-              {/* Compensation */}
-              <div className="form-group">
-                <label className="form-label">
-                  Compensation Offer (ICP Tokens)
-                </label>
-                <input
-                  type="number"
-                  value={compensation}
-                  onChange={(e) => setCompensation(e.target.value)}
-                  placeholder="Enter compensation amount"
-                  className="form-input"
-                />
-                <p className="form-help">
-                  Recommended: ${selectedSources.length * 50} - ${selectedSources.length * 150}
-                </p>
-              </div>
+          <div className="form-group">
+            <label className="form-label">Reason for Request</label>
+            <textarea
+              value={form.reason}
+              onChange={(e) => setForm({ ...form, reason: e.target.value })}
+              placeholder="Explain why you're requesting this data"
+              className="form-textarea"
+            />
+          </div>
 
-              {/* Submit */}
-              <div className="modal-footer">
-                <div className="modal-footer-info">
-                  {selectedSources.length} data source{selectedSources.length !== 1 ? 's' : ''} selected
-                </div>
-                <div className="modal-footer-actions">
-                  <button
-                    onClick={() => setModal(null)}
-                    className="btn-secondary"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSubmitRequest}
-                    disabled={!compensation || selectedSources.length === 0}
-                    className="btn-primary"
-                  >
-                    Submit Request
-                  </button>
-                </div>
-              </div>
-            </div>
+          {/* Optional Filters */}
+          <div className="form-group">
+            <label className="form-label">Age Range</label>
+            <select
+              value={form.ageRange}
+              onChange={(e) => setForm({ ...form, ageRange: e.target.value })}
+              className="form-select"
+            >
+              <option value="">All Ages</option>
+              <option value="18-30">18-30</option>
+              <option value="31-50">31-50</option>
+              <option value="51-70">51-70</option>
+              <option value="70+">70+</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Gender</label>
+            <select
+              value={form.gender}
+              onChange={(e) => setForm({ ...form, gender: e.target.value })}
+              className="form-select"
+            >
+              <option value="">All Genders</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Data Quality</label>
+            <select
+              value={form.dataQuality}
+              onChange={(e) => setForm({ ...form, dataQuality: e.target.value })}
+              className="form-select"
+            >
+              <option value="">Any Quality</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Preferred Format</label>
+            <select
+              value={form.format}
+              onChange={(e) => setForm({ ...form, format: e.target.value })}
+              className="form-select"
+            >
+              <option value="">Select format</option>
+              <option value="csv">CSV</option>
+              <option value="json">JSON</option>
+              <option value="pdf">PDF</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Deadline</label>
+            <input
+              type="date"
+              value={form.deadline}
+              onChange={(e) => setForm({ ...form, deadline: e.target.value })}
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-actions">
+            <button
+              onClick={handleSubmitRequest}
+              className="btn btn-primary"
+            >
+              Submit Request
+            </button>
+            <button
+              onClick={() => setModal(null)}
+              className="btn btn-secondary"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+         </div>
           </div>
         </div>
       )}
