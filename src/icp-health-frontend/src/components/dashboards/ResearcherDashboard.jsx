@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import { 
   Database, 
   Users, 
@@ -53,6 +53,15 @@ const ResearcherDashboard = ({ currentUser, showModal, setShowModal }) => {
   const [selectedSources, setSelectedSources] = useState([]);
   const [compensation, setCompensation] = useState('');
   const [collaborationRequest, setCollaborationRequest] = useState([]);
+
+  function usePrevious(value) {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref.current;
+}
+
 
   const [filters, setFilters] = useState({
     ageRange: '',
@@ -281,7 +290,9 @@ const [newStudyForm, setNewStudyForm] = useState({
 
   // Mock data for advanced features
   const activeStudies = researchStudies.filter(s => s.status === 'active').length;
-  const totalParticipants = researchStudies.reduce((sum, s) => sum + s.participants, 0);
+  const totalParticipants = Array.isArray(createdStudies)
+  ? createdStudies.reduce((sum, study) => sum + Number(study.participants || 0), 0)
+  : 0;
   const recruitingStudies = researchStudies.filter(s => s.status === 'recruiting').length;
 
   const analyticsData = [
@@ -314,22 +325,7 @@ const [newStudyForm, setNewStudyForm] = useState({
     }
   ];
 
-  const collaborationRequests = [
-    {
-      id: 1,
-      from: "Dr. Sarah Chen - Stanford Medical",
-      study: "Multi-center Cardiovascular Study",
-      message: "Would like to collaborate on patient outcome analysis",
-      status: "pending"
-    },
-    {
-      id: 2,
-      from: "Research Team - Mayo Clinic",
-      study: "Diabetes Prevention Initiative",
-      message: "Interested in sharing anonymized datasets",
-      status: "pending"
-    }
-  ];
+  
 
 const renderOverviewTab = () => (
   <div className="tab-content">
@@ -347,17 +343,18 @@ const renderOverviewTab = () => (
         title="Total Participants"
         value={totalParticipants.toLocaleString()}
         icon={Users}
-        trend={{ value: '+15.2%', isPositive: true }}
         color="blue"
       />
       
       <StatCard
-        title="Data Points"
-        value="2.1M"
-        icon={BarChart3}
-        trend={{ value: '+8.7%', isPositive: true }}
+        title="Collaborations"
+        value={collaborationRequest.length.toLocaleString()}
+        icon={UserPlus}
+        trend={{ value: `+${collaborationRequest.length}`, isPositive: true }}
         color="yellow"
       />
+
+      
     </div>
 
     {/* AI-Powered Insights */}
