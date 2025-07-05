@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import LandingPage from './components/pages/LandingPage'; // Optional if you want to keep it
+import LandingPage from './components/pages/LandingPage';
 import LoginPage from './components/pages/LoginPage';
 import RegistrationPage from './components/pages/RegistrationPage';
 import Header from './components/shared/Header';
@@ -14,9 +14,9 @@ function App() {
   const [needsRegistration, setNeedsRegistration] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [principalId, setPrincipalId] = useState('');
-  const [patientViewMode, setPatientViewMode] = useState('dashboard'); // 'dashboard' or 'uploads'
+  const [patientViewMode, setPatientViewMode] = useState('dashboard');
   const [showResearchModal, setShowResearchModal] = useState(false);
-  const [currentView, setCurrentView] = useState('login'); // 'login' | 'landing' | 'dashboard'
+  const [currentView, setCurrentView] = useState('landing'); // Start with landing
 
   const handleLogin = (principal, user) => {
     setPrincipalId(principal);
@@ -41,7 +41,7 @@ function App() {
     setNeedsRegistration(false);
     setCurrentUser(null);
     setPatientViewMode('dashboard');
-    setCurrentView('login');
+    setCurrentView('landing');
   };
 
   const handleDemoLogin = (role) => {
@@ -79,6 +79,7 @@ function App() {
     }
   };
 
+  // Registration page
   if (needsRegistration) {
     return (
       <RegistrationPage
@@ -89,14 +90,22 @@ function App() {
     );
   }
 
+  // Login page
   if (!isLoggedIn && currentView === 'login') {
     return <LoginPage onLogin={handleLogin} />;
   }
 
+  // Landing page
   if (currentView === 'landing') {
-    return <LandingPage onLogin={handleDemoLogin} />;
+    return (
+      <LandingPage
+        onLoginClick={() => setCurrentView('login')}
+        onDemoLogin={handleDemoLogin}
+      />
+    );
   }
 
+  // Dashboard
   return (
     <div className="app-wrapper">
       <Header
