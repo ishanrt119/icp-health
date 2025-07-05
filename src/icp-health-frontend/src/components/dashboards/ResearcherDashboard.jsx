@@ -1,4 +1,16 @@
 import React, { useState, useEffect,useRef } from 'react';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  LineChart,
+  Line,
+} from 'recharts';
 import { 
   Database, 
   Users, 
@@ -24,7 +36,8 @@ import {
   Settings,
   Share2,
   BookOpen,
-  PieChart,
+  PieChart as PieChartIcon,
+
   Activity,
   Microscope,
   X,
@@ -625,105 +638,192 @@ const renderOverviewTab = () => (
     </div>
   );
 
-  const renderAnalyticsTab = () => (
-    <div className="tab-content">
-      <h2>Data Analytics</h2>
-      
-      {/* Analytics Overview */}
-      <div className="analytics-overview">
-        <div className="card">
-          <div className="card-header">
-            <PieChart className="icon-blue" />
-            <h3>Data Distribution</h3>
-          </div>
-          <div className="analytics-items">
-            {analyticsData.slice(0, 4).map((item, index) => (
-              <div key={index} className="analytics-item">
-                <span className="analytics-label">{item.category}</span>
-                <span className="analytics-value">{item.patients}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+  const renderAnalyticsTab = (analyticsData) => (
+    
+  <div className="tab-content">
+    <h2>Data Analytics</h2>
 
-        <div className="card">
-          <div className="card-header">
-            <Activity className="icon-green" />
-            <h3>Quality Metrics</h3>
-          </div>
-          <div className="analytics-items">
-            <div className="analytics-item">
-              <span className="analytics-label">High Quality</span>
-              <span className="analytics-value quality-high">78%</span>
-            </div>
-            <div className="analytics-item">
-              <span className="analytics-label">Medium Quality</span>
-              <span className="analytics-value quality-medium">18%</span>
-            </div>
-            <div className="analytics-item">
-              <span className="analytics-label">Low Quality</span>
-              <span className="analytics-value quality-low">4%</span>
-            </div>
-          </div>
-        </div>
+    {/* Analytics Overview */}
+    <div className="analytics-overview">
 
-        <div className="card">
-          <div className="card-header">
-            <TrendingUp className="icon-purple" />
-            <h3>Trends</h3>
-          </div>
-          <div className="analytics-items">
-            <div className="analytics-item">
-              <span className="analytics-label">Data Requests</span>
-              <span className="analytics-value trend-up">↑ 23%</span>
-            </div>
-            <div className="analytics-item">
-              <span className="analytics-label">Participants</span>
-              <span className="analytics-value trend-up">↑ 15%</span>
-            </div>
-            <div className="analytics-item">
-              <span className="analytics-label">Completion Rate</span>
-              <span className="analytics-value trend-neutral">↑ 8%</span>
-            </div>
-          </div>
+      {/* Data Distribution */}
+      <div className="card">
+        <div className="card-header">
+          <PieChartIcon className="icon-blue" />
+          <h3>Data Distribution</h3>
+        </div>
+        <div className="analytics-items">
+          <PieChart width={300} height={250}>
+            <Pie
+              data={analyticsData.slice(0, 4)}
+              dataKey="patients"
+              nameKey="category"
+              cx="50%"
+              cy="50%"
+              outerRadius={80}
+              fill="#8884d8"
+              label
+            >
+              {analyticsData.slice(0, 4).map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={['#2563eb', '#10b981', '#f59e0b', '#ef4444'][index % 4]}
+                />
+              ))}
+            </Pie>
+            <Tooltip />
+          </PieChart>
         </div>
       </div>
 
-    {/* Detailed Analytics */}
-<div className="card">
-  <h3>Category Analysis</h3>
-  <div className="category-analysis">
-    {analyticsData.map((item, index) => (
-      <div key={index} className="category-item">
-        <div className="category-header">
-          <h4>{item.category}</h4>
-          <div className="category-stats">
-            <span>{item.patients.toLocaleString()} patients</span>
-            <span>Avg. Age: {item.avgAge}</span>
-            <span className={`quality-badge quality-${item.quality.toLowerCase()}`}>
-              {item.quality} Quality
-            </span>
-          </div>
+      {/* Quality Metrics */}
+      <div className="card">
+        <div className="card-header">
+          <Activity className="icon-green" />
+          <h3>Quality Metrics</h3>
         </div>
-
-        <div className="category-details">
-          <span>Completion: {item.completion}%</span>
-          <button className="view-details-btn">View Details →</button>
-        </div>
-
-        <div className="progress-bar">
-          <div 
-            className="progress-fill" 
-            style={{ width: `${item.completion}%` }}
-          ></div>
+        <div className="analytics-items">
+          <BarChart width={300} height={200} data={[
+            { label: 'High', value: 78 },
+            { label: 'Medium', value: 18 },
+            { label: 'Low', value: 4 }
+          ]}>
+            <XAxis dataKey="label" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="value">
+              <Cell fill="#22c55e" />
+              <Cell fill="#facc15" />
+              <Cell fill="#ef4444" />
+            </Bar>
+          </BarChart>
         </div>
       </div>
-    ))}
-  </div>
-</div>
+
+      {/* Trends */}
+      <div className="card">
+        <div className="card-header">
+          <TrendingUp className="icon-purple" />
+          <h3>Trends</h3>
+        </div>
+        <div className="analytics-items">
+          <LineChart width={300} height={200} data={[
+            { metric: 'Data Requests', value: 23 },
+            { metric: 'Participants', value: 15 },
+            { metric: 'Completion Rate', value: 8 }
+          ]}>
+            <XAxis dataKey="metric" />
+            <YAxis />
+            <Tooltip />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#6366f1"
+              strokeWidth={2}
+            />
+          </LineChart>
+        </div>
+      </div>
 
     </div>
-  );
+
+    {/* Detailed Analytics */}
+    <div className="card">
+      <h3>Category Analysis</h3>
+      <div className="category-analysis">
+        {analyticsData.map((item, index) => (
+          <div key={index} className="category-item">
+            <div className="category-header">
+              <h4>{item.category}</h4>
+              <div className="category-stats">
+                <span>{item.patients.toLocaleString()} patients</span>
+                <span>Avg. Age: {item.avgAge}</span>
+                <span className={`quality-badge quality-${item.quality.toLowerCase()}`}>
+                  {item.quality} Quality
+                </span>
+              </div>
+            </div>
+
+            <div className="category-details">
+              <span>Completion: {item.completion}%</span>
+              <button className="view-details-btn">View Details →</button>
+            </div>
+
+            <div className="progress-bar">
+              <div
+                className="progress-fill"
+                style={{ width: `${item.completion}%` }}
+              ></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+const renderDataRequestTab = (researcherDataRequests, setModal) => (
+  <div className="tab-content">
+    <div className="tab-header">
+      <h2>Data Requests</h2>
+      <button onClick={() => setModal('dataSearch')} className="btn-primary">
+        <Search className="btn-icon" />
+        <span>New Request</span>
+      </button>
+    </div>
+
+    <div className="card">
+      <div className="requests-list">
+        {researcherDataRequests.map((req) => (
+          <React.Fragment key={req.id}>
+            <div className="request-item">
+              <div className="request-main">
+                <div className="request-header">
+                  <h4 className="request-name">{req.requesterName}</h4>
+                  <span className={`status-badge status-${req.status.replace(' ', '-').toLowerCase()}`}>
+                    {req.status}
+                  </span>
+                </div>
+                <p className="request-detail">
+                  <strong>Requested:</strong> {req.dataSourcesRequested.join(', ')}
+                </p>
+                {req.dataSourcesReceived.length > 0 && (
+                  <p className="request-detail">
+                    <strong>Received:</strong> {req.dataSourcesReceived.join(', ')}
+                  </p>
+                )}
+                <div className="request-meta">
+                  <span>{req.date}</span>
+                  <span className="request-compensation">{req.compensation} ICP</span>
+                </div>
+              </div>
+
+              <div className="request-actions">
+                {req.dataSourcesReceived.length > 0 && (
+                  <button className="request-action-btn">
+                    <Download className="request-action-icon" />
+                  </button>
+                )}
+                <button className="request-action-btn">
+                  <Eye className="request-action-icon" />
+                </button>
+              </div>
+
+              {req.status.toLowerCase() === 'pending' && (
+                <div className="request-status">
+                  <div className="request-status-content">
+                    <Clock className="request-status-icon" />
+                    <span>Waiting for patient approval</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 const renderDataRequestsTab = () => (
   <div className="tab-content">
@@ -821,7 +921,8 @@ const renderDataRequestsTab = () => (
       {/* Tab Content */}
       {activeTab === 'overview' && renderOverviewTab()}
       {activeTab === 'studies' && renderStudiesTab()}
-      {activeTab === 'analytics' && renderAnalyticsTab()}
+      {activeTab === 'analytics' && analyticsData && renderAnalyticsTab(analyticsData)}
+
       {activeTab === 'requests' && renderDataRequestsTab()}
 
       {/* Advanced Data Search Modal */}
