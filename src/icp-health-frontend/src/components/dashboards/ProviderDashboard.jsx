@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import StatCard from '../shared/StatCard';
 import { HttpAgent } from '@dfinity/agent';
-
+import { formatDistanceToNow } from 'date-fns';
 import { AuthClient } from '@dfinity/auth-client';
 import { createActor } from '../../../../declarations/icp-health-backend';
 import { healthRecords, dataRequests } from '../../utils/mockData';
@@ -14,6 +14,28 @@ const canisterId = import.meta.env.VITE_CANISTER_ID_ICP_HEALTH_BACKEND;
 
 const ProviderDashboard = () => {
 
+
+
+  const [lastLogin, setLastLogin] = useState('Unknown');
+
+useEffect(() => {
+  const stored = localStorage.getItem('lastLogin');
+
+  if (stored) {
+    setLastLogin(formatDistanceToNow(new Date(stored), { addSuffix: true }));
+  } else {
+    setLastLogin('Unknown');
+  }
+
+  const intervalId = setInterval(() => {
+    const stored = localStorage.getItem('lastLogin');
+    if (stored) {
+      setLastLogin(formatDistanceToNow(new Date(stored), { addSuffix: true }));
+    }
+  }, 60 * 1000);
+
+  return () => clearInterval(intervalId);
+}, []);
 
 
   const pendingRequests = dataRequests.filter(r => r.status === 'pending').length;
@@ -99,11 +121,11 @@ const dataAccess = patientData.length;
         <p className="opacity-90">Access patient data securely with proper consent and compensation.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" style={{ justifyContent: 'space-evenly' }}>
         <StatCard title="Active Patients" value={patients} icon={Users} color="green" />
         <StatCard title="Data Access Granted" value={dataAccess} icon={FileText} color="blue" />
         <StatCard title="Pending Requests" value={pendingRequests} icon={Clock} color="yellow" />
-        <StatCard title="Research Collaborations" value={5} icon={Activity} color="purple" />
+        <StatCard title="Recent Activity" value={lastLogin || "Unknown"} icon={Activity} color="purple" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

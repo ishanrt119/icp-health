@@ -31,6 +31,10 @@ const LoginPage = ({ onLogin }) => {
           } else {
             onLogin(principal, null);
           }
+
+          // ✅ Save login time AFTER successful login
+          localStorage.setItem('lastLogin', new Date().toISOString());
+
         } catch (err) {
           console.error("Login error:", err);
           alert("Something went wrong. Check console.");
@@ -42,6 +46,7 @@ const LoginPage = ({ onLogin }) => {
       },
     });
   };
+
 
   return (
     <div className="login-container">
