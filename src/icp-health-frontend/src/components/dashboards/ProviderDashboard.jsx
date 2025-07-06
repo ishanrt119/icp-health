@@ -352,7 +352,7 @@ const ModalWrapper = React.memo(({ children }) => (
           <span className={`badge ${req.status === 'pending' ? 'yellow' : 'green'}`}>{req.status}</span>
         </div>
         <p className="text-sm text-gray-600 mb-2">
-          From: {req.requesterName} - {req.purpose}
+          From: {req.requester_name} - {req.purpose}
         </p>
         <div className="flex justify-between items-center text-xs text-gray-500">
           <span>Requested on {req.date}</span>
@@ -391,15 +391,15 @@ const ModalWrapper = React.memo(({ children }) => (
         <form className="space-y-4" onSubmit={handleAddRequest}>
 
           <div className="form-group">
-            <label className="form-label">Requester Name</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.requesterName}
-              onChange={(e) => setFormData({ ...formData, requesterName: e.target.value })}
-              required
-            />
-          </div>
+  <label className="form-label">Requester Name</label>
+  <input
+    type="text"
+    className="form-input"
+    value={currentUser?.name || ''}
+    readOnly
+  />
+</div>
+
 
           <div className="form-group">
             <label className="form-label">Select Recipients (Providers or Researchers)</label>
