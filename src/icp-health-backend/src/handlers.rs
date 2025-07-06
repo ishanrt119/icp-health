@@ -42,6 +42,17 @@ pub fn get_data_requests_by_email(email: String) -> Vec<DataRequest> {
     })
 }
 
+pub fn get_sent_requests_by_email(email: String) -> Vec<DataRequest> {
+    DATA_REQUESTS.with(|reqs| {
+        reqs.borrow()
+            .iter()
+            .filter(|r| r.requester_email == email)
+            .cloned()
+            .collect()
+    })
+}
+
+
 pub fn upload_document(
     file_name: String,
     doc_type: String,

@@ -60,6 +60,12 @@ fn get_data_requests_by_email(email: String) -> Vec<models::DataRequest> {
     handlers::get_data_requests_by_email(email)
 }
 
+#[query]
+fn get_sent_requests_by_email(email: String) -> Vec<models::DataRequest> {
+    handlers::get_sent_requests_by_email(email)
+}
+
+
 #[update]
 fn delete_upload(hash: String) -> Result<(), String> {
     handlers::delete_upload(hash)

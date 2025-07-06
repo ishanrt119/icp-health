@@ -73,6 +73,22 @@ service : {
     }
   ) query;
 
+  get_sent_requests_by_email: (text) -> (
+  vec record {
+    id: text;
+    requester_name: text;
+    requester_email: text;
+    recipients: vec text;
+    data_type: text;
+    purpose: text;
+    message: text;
+    compensation: text;
+    status: text;
+    date: text;
+  }
+) query;
+
+
   get_my_uploads: () -> (
     vec record {
       index : nat64;

@@ -86,32 +86,28 @@ const toggleRecipient = (email) => {
 
 useEffect(() => {
   const fetchRequests = async () => {
-    const authClient = await AuthClient.create();
-    const identity = await authClient.getIdentity();
-    const agent = new HttpAgent({ identity });
+  const authClient = await AuthClient.create();
+  const identity = await authClient.getIdentity();
+  const agent = new HttpAgent({ identity });
 
-    if (window.location.hostname === 'localhost') {
-      await agent.fetchRootKey();
-    }
+  if (window.location.hostname === 'localhost') {
+    await agent.fetchRootKey();
+  }
 
-    const actor = createActor(canisterId, { agent });
+  const actor = createActor(canisterId, { agent });
+  const user = await actor.get_user();
 
-    const user = await actor.get_user();
-    const all = await actor.get_data_requests_by_email(user.email);
-    console.log("All Requests Returned:", all);
+  const received = await actor.get_data_requests_by_email(user.email);
+  const sent = await actor.get_sent_requests_by_email(user.email);
 
-    const received = all.filter(req => req.recipients.includes(user.email));
+  console.log("✅ Received Requests:", received);
+  console.log("📤 Sent Requests:", sent);
 
-    // Load sent requests from localStorage
-    const storedSent = JSON.parse(localStorage.getItem("sentRequests") || "[]");
-    const sent = storedSent.filter(req => req.requester_email === user.email);
-    console.log("Sent Requests:", sent);
+  setCurrentUser(user);
+  setReceivedRequests(received);
+  setSentRequests(sent);
+};
 
-    setDataRequests(all);
-    setReceivedRequests(received);
-    setSentRequests(sent);
-    setCurrentUser(user);
-  };
 
   fetchRequests();
 }, []);
