@@ -87,6 +87,7 @@ service : {
     date: text;
   }
 ) query;
+update_data_request_status: (text, text) -> (variant { ok : null; err : text });
 
 
   get_my_uploads: () -> (

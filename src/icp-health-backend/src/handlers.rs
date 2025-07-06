@@ -52,6 +52,18 @@ pub fn get_sent_requests_by_email(email: String) -> Vec<DataRequest> {
     })
 }
 
+pub fn update_data_request_status(id: String, new_status: String) -> Result<(), String> {
+    DATA_REQUESTS.with(|requests| {
+        let mut reqs = requests.borrow_mut();
+        if let Some(req) = reqs.iter_mut().find(|r| r.id == id) {
+            req.status = new_status;
+            Ok(())
+        } else {
+            Err("Request not found".to_string())
+        }
+    })
+}
+
 
 pub fn upload_document(
     file_name: String,

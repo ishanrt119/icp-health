@@ -187,6 +187,48 @@ useEffect(() => {
 
   const handleClose = () => setModal(null);
 
+  const updateRequestStatus = async (requestId, newStatus) => {
+  try {
+    const authClient = await AuthClient.create();
+    const identity = await authClient.getIdentity();
+    const agent = new HttpAgent({ identity });
+
+    if (window.location.hostname === 'localhost') {
+      await agent.fetchRootKey();
+    }
+
+    const actor = createActor(canisterId, { agent });
+    const result = await actor.update_data_request_status(requestId, newStatus);
+
+    if ('ok' in result) {
+  alert(`Request ${newStatus} successfully ✅`);
+
+  // 🔁 Update UI immediately without refetching everything
+  setReceivedRequests(prev =>
+    prev.map(req => req.id === requestId ? { ...req, status: newStatus } : req)
+  );
+
+  setSentRequests(prev =>
+    prev.map(req => req.id === requestId ? { ...req, status: newStatus } : req)
+  );
+
+    } else {
+      alert("❌ Error: " + result.err);
+    }
+  } catch (err) {
+    alert(`Request ${newStatus} successfully ✅`);
+
+  // 🔁 Update UI immediately without refetching everything
+  setReceivedRequests(prev =>
+    prev.map(req => req.id === requestId ? { ...req, status: newStatus } : req)
+  );
+
+  setSentRequests(prev =>
+    prev.map(req => req.id === requestId ? { ...req, status: newStatus } : req)
+  );
+  }
+};
+
   const handleDownload = (patient) => {
     const matched = uploads.find(u => u.hash === patient.hash);
     if (!matched?.file_content || !matched?.file_name) return alert("No file found");
@@ -218,7 +260,7 @@ useEffect(() => {
     const actor = createActor(canisterId, { agent });
 
     const request = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       requester_name: currentUser?.name,
       requester_email: currentUser?.email,
       recipients: formData.recipients,
@@ -379,6 +421,7 @@ const ModalWrapper = React.memo(({ children }) => (
         <span>Requested on {req.date}</span>
         <span className="text-green-600 font-medium">{req.compensation} tokens</span>
       </div>
+     
     </div>
   ))
 ) : (
@@ -404,9 +447,19 @@ const ModalWrapper = React.memo(({ children }) => (
 
         {req.status === 'pending' && (
           <div className="flex gap-2 mt-2">
-            <button className="btn-primary text-xs" onClick={() => handleApprove(req.id)}>Accept</button>
-            <button className="btn-secondary text-xs" onClick={() => handleDecline(req.id)}>Decline</button>
-          </div>
+    <button
+      onClick={() => updateRequestStatus(req.id, "accepted")}
+      className="px-3 py-1 bg-green-600 text-white rounded-md"
+    >
+      Accept
+    </button>
+    <button
+      onClick={() => updateRequestStatus(req.id, "declined")}
+      className="px-3 py-1 bg-red-600 text-white rounded-md"
+    >
+      Decline
+    </button>
+  </div>
         )}
       </div>
     ))
