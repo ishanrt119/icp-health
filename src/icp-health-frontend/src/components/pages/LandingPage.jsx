@@ -1,198 +1,179 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
+  Heart, 
   Shield, 
   Users, 
+  Activity, 
   Brain, 
-  Lock, 
-  Heart, 
-  Award,
-  Mail,
-  Phone,
-  MapPin,
+  Zap, 
+  FileText, 
+  Calendar,
+  UserCheck,
+  Database,
+  Lock,
+  CheckCircle,
+  Play,
+  Star,
   Facebook,
   Twitter,
-  Linkedin,
   Instagram,
+  Linkedin,
+  Infinity,
+  Mail,
+  Phone,
   ArrowRight,
-  CheckCircle,
-  Star,
-  TrendingUp,
-  Database,
-  Globe
+  DollarSign
 } from 'lucide-react';
-import './landing.css';
+import './landing.css'; // Assuming you have a CSS file for styles
 
+const Landing = ({ onLoginClick, onDemoLogin }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
-const LandingPage = ({onLoginClick,onDemoLogin}) => {
-  
   const [counters, setCounters] = useState({
-    uploads: 0,
-    hospitals: 0,
     users: 0,
-    security: 0
+    rewards: 0,
+    uptime: 0
   });
 
-  // Animated counter effect
   useEffect(() => {
-  const targets = {
-    uploads: 10000,
-    hospitals: 50,
-    users: 25000,
-    security: 99.9
-  };
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
 
-  const duration = 2000; // 2 seconds
-  const steps = 60;
-  const stepTime = duration / steps;
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-  const intervalIds = [];
+  useEffect(() => {
+    const targets = {
+      users: 10000,
+      rewards: 2500000, // $2.5M
+      uptime: 99.9
+    };
 
-  Object.keys(targets).forEach(key => {
-    const target = targets[key];
-    const increment = target / steps;
-    let current = 0;
+    const duration = 2000;
+    const steps = 60;
+    const stepTime = duration / steps;
+    const intervalIds = [];
 
-    const id = setInterval(() => {
-      current += increment;
-      if (current >= target) {
-        current = target;
-        clearInterval(id);
-      }
+    Object.keys(targets).forEach(key => {
+      const target = targets[key];
+      const increment = target / steps;
+      let current = 0;
 
-      setCounters(prev => ({
-        ...prev,
-        [key]: key === 'security' ? current.toFixed(1) : Math.floor(current)
-      }));
-    }, stepTime);
+      const id = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+          current = target;
+          clearInterval(id);
+        }
 
-    intervalIds.push(id);
-  });
+        setCounters(prev => ({
+          ...prev,
+          [key]: key === 'uptime' ? current.toFixed(1) : Math.floor(current)
+        }));
+      }, stepTime);
 
-  return () => {
-    intervalIds.forEach(clearInterval);
-  };
-}, []);
+      intervalIds.push(id);
+    });
 
+    return () => {
+      intervalIds.forEach(clearInterval);
+    };
+  }, []);
 
-  const handleLoginClick = () => {
-    onLoginClick();
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
 
   const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+    setIsMenuOpen(false);
   };
 
-  const handleContactSubmit = (e) => {
-    e.preventDefault();
-    alert('Thank you for your message! We\'ll get back to you soon.');
+  const handleGetStarted = () => {
+    onLoginClick();
   };
 
   return (
     <div className="landing-page">
-      {/* Animated Background */}
-      <div className="animated-background">
-        <div className="floating-shapes">
-          <div className="shape shape-1"></div>
-          <div className="shape shape-2"></div>
-          <div className="shape shape-3"></div>
-          <div className="shape shape-4"></div>
-          <div className="shape shape-5"></div>
+      {/* Navigation */}
+      <nav className={`nav ${isScrolled ? 'nav-scrolled' : ''}`}>
+        <div className="nav-container">
+          <div className="nav-brand">
+            <div className="nav-logo">HV</div>
+            <span className="nav-title">HealthVault</span>
+          </div>
+          <div className={`nav-menu ${isMenuOpen ? 'nav-menu-open' : ''}`}>
+            <a href="#features" onClick={(e) => { e.preventDefault(); scrollToSection('features'); }}>Features</a>
+            <a href="#how-it-works" onClick={(e) => { e.preventDefault(); scrollToSection('how-it-works'); }}>How It Works</a>
+            <a href="#security" onClick={(e) => { e.preventDefault(); scrollToSection('security'); }}>Security</a>
+            <button className="nav-cta-btn" onClick={handleGetStarted}>Get Started</button>
+          </div>
+          <button className="nav-toggle" onClick={toggleMenu}>
+            <span></span><span></span><span></span>
+          </button>
         </div>
-      </div>
-
-      {/* Header */}
-      <header className="header">
-  <div className="header-container">
-    {/* Left: Logo */}
-    <div className="logo">
-      <Shield className="logo-icon" />
-      <span className="logo-text">HealthVault</span>
-    </div>
-
-    {/* Right: Nav + Button */}
-    <div className="nav-actions">
-      <nav className="nav">
-        <a href="#home" onClick={() => scrollToSection('home')}>Home</a>
-        <a href="#about" onClick={() => scrollToSection('about')}>About</a>
-        <a href="#testimonials" onClick={() => scrollToSection('testimonials')}>Testimonials</a>
-        <a href="#contact" onClick={() => scrollToSection('contact')}>Contact</a>
       </nav>
-      <button className="login-btn" onClick={handleLoginClick}>
-        <span>Login</span>
-        <ArrowRight className="btn-icon" />
-      </button>
-    </div>
-  </div>
-</header>
-
 
       {/* Hero Section */}
-      <section id="home" className="hero">
-        <div className="container">
+      <section className="hero">
+        <div className="hero-background">
+          <div className="hero-shapes">
+            <div className="hero-shape hero-shape-1"></div>
+            <div className="hero-shape hero-shape-2"></div>
+            <div className="hero-shape hero-shape-3"></div>
+            <div className="hero-shape hero-shape-4"></div>
+            <div className="hero-shape hero-shape-5"></div>
+            <div className="hero-shape hero-shape-6"></div>
+          </div>
+        </div>
+        <div className="hero-container">
           <div className="hero-content">
-            <div className="hero-text">
-              <h1 className="hero-title">
-                Your Health, <span className="gradient-text">Secured</span>.
-                <br />
-                Your Data, <span className="gradient-text">Empowered</span>.
-              </h1>
-              <p className="hero-subtitle">
-                HealthVault is the future of healthcare data management. Securely store, 
-                share, and monetize your health records while enabling groundbreaking 
-                medical research through blockchain technology.
-              </p>
-              <div className="hero-buttons">
-                <button 
-                  className="cta-btn primary"
-                  onClick={() => scrollToSection('about')}
-                >
-                  <span>Get Started</span>
-                  <ArrowRight className="btn-icon" />
-                </button>
-                <button 
-                  className="cta-btn secondary"
-                  onClick={() => scrollToSection('testimonials')}
-                >
-                  <span>Learn More</span>
-                </button>
+            <div className="hero-badge">
+              <Star size={16} /><span style={{ marginLeft: '8px' }}>🚀 Powered by Internet Computer</span>
+            </div>
+            <h1 className="hero-title">Your Health Data,<span className="hero-title-gradient"> Your Control</span></h1>
+            <p className="hero-subtitle">
+              The first decentralized platform that puts you in complete control of your health data. 
+              Secure, private, and profitable - earn rewards while contributing to medical breakthroughs.
+            </p>
+            <div className="hero-actions">
+              <button className="hero-btn-primary" onClick={handleGetStarted}>Start Your Vault</button>
+              <button className="hero-btn-secondary">
+                <Play size={20} className="hero-btn-icon" />Watch Demo
+              </button>
+            </div>
+            <div className="hero-stats">
+              <div className="hero-stat">
+                <div className="hero-stat-number">{counters.users.toLocaleString()}+</div>
+                <div className="hero-stat-label">Active Users</div>
+              </div>
+              <div className="hero-stat">
+                <div className="hero-stat-number">${(counters.rewards / 1000000).toFixed(1)}M</div>
+                <div className="hero-stat-label">Rewards Paid</div>
+              </div>
+              <div className="hero-stat">
+                <div className="hero-stat-number">{counters.uptime}%</div>
+                <div className="hero-stat-label">Uptime</div>
               </div>
             </div>
-            <div className="hero-visual">
-              <div className="hero-card">
-                <div className="card-header">
-                  <div className="card-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                  <span className="card-title">Health Dashboard</span>
+          </div>
+          <div className="hero-visual">
+            <div className="hero-dashboard">
+              <div className="dashboard-header">
+                <div className="dashboard-dots"><span></span><span></span><span></span></div>
+                <div className="dashboard-title">HealthVault Dashboard</div>
+              </div>
+              <div className="dashboard-content">
+                <div className="dashboard-card">
+                  <FileText size={24} className="card-icon" style={{ color: '#ef4444' }} />
+                  <div><div className="card-title">Medical Records</div><div className="card-value">247 Files</div></div>
                 </div>
-                <div className="card-content">
-                  <div className="health-metric">
-                    <Heart className="metric-icon" />
-                    <div className="metric-data">
-                      <span className="metric-value">72 BPM</span>
-                      <span className="metric-label">Heart Rate</span>
-                    </div>
-                  </div>
-                  <div className="health-metric">
-                    <TrendingUp className="metric-icon" />
-                    <div className="metric-data">
-                      <span className="metric-value">120/80</span>
-                      <span className="metric-label">Blood Pressure</span>
-                    </div>
-                  </div>
-                  <div className="health-metric">
-                    <Database className="metric-icon" />
-                    <div className="metric-data">
-                      <span className="metric-value">15 Records</span>
-                      <span className="metric-label">Uploaded</span>
-                    </div>
-                  </div>
+                <div className="dashboard-card">
+                  <Infinity size={24} className="card-icon" style={{ color: '#10b981' }} />
+                  <div><div className="card-title">Earnings</div><div className="card-value">1,247</div></div>
                 </div>
               </div>
             </div>
@@ -200,286 +181,208 @@ const LandingPage = ({onLoginClick,onDemoLogin}) => {
         </div>
       </section>
 
-      {/* About Section */}
-      <section id="about" className="about">
+      {/* Features Section */}
+      <section id="features" className="features">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Revolutionizing Healthcare Data</h2>
+            <h2 className="section-title">Revolutionary Features</h2>
             <p className="section-subtitle">
-              HealthVault connects patients, providers, and researchers in a secure, 
-              transparent ecosystem powered by blockchain technology.
+              Experience the future of health data management with cutting-edge blockchain technology
             </p>
           </div>
           
           <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-icon privacy">
-                <Lock />
-              </div>
-              <h3>Privacy First</h3>
-              <p>
-                Your health data is encrypted and stored securely on the blockchain. 
-                You control who has access and how it's used.
+            <div className="feature-item">
+              <FileText size={48} className="feature-icon" style={{ color: '#3b82f6' }} />
+              <h3 className="feature-title">Zero-Knowledge Security</h3>
+              <p className="feature-description">
+                Your data is encrypted with military-grade security. Even we can't access your personal information.
               </p>
-              <ul className="feature-list">
-                <li><CheckCircle className="check-icon" /> End-to-end encryption</li>
-                <li><CheckCircle className="check-icon" /> HIPAA compliant</li>
-                <li><CheckCircle className="check-icon" /> Zero-knowledge architecture</li>
-              </ul>
+              <span className="feature-link">Learn more →</span>
             </div>
-
-            <div className="feature-card">
-              <div className="feature-icon collaboration">
-                <Users />
-              </div>
-              <h3>Seamless Collaboration</h3>
-              <p>
-                Enable secure data sharing between healthcare providers and researchers 
-                while maintaining complete control over your information.
+            
+            <div className="feature-item">
+              <Calendar size={48} className="feature-icon" style={{ color: '#10b981' }} />
+              <h3 className="feature-title">Blockchain Verified</h3>
+              <p className="feature-description">
+                Every record is immutably stored on the Internet Computer, ensuring authenticity and preventing tampering.
               </p>
-              <ul className="feature-list">
-                <li><CheckCircle className="check-icon" /> Instant data sharing</li>
-                <li><CheckCircle className="check-icon" /> Provider networks</li>
-                <li><CheckCircle className="check-icon" /> Research participation</li>
-              </ul>
+              <span className="feature-link">Learn more →</span>
             </div>
-
-            <div className="feature-card">
-              <div className="feature-icon insights">
-                <Brain />
-              </div>
-              <h3>AI-Driven Insights</h3>
-              <p>
-                Advanced AI algorithms analyze anonymized data to provide personalized 
-                health insights and contribute to medical breakthroughs.
+            
+            <div className="feature-item">
+              <Activity size={48} className="feature-icon" style={{ color: '#f59e0b' }} />
+              <h3 className="feature-title">Earn While You Share</h3>
+              <p className="feature-description">
+                Monetize your anonymized health data by contributing to medical research and pharmaceutical studies.
               </p>
-              <ul className="feature-list">
-                <li><CheckCircle className="check-icon" /> Personalized recommendations</li>
-                <li><CheckCircle className="check-icon" /> Predictive analytics</li>
-                <li><CheckCircle className="check-icon" /> Research contributions</li>
-              </ul>
+              <span className="feature-link">Learn more →</span>
+            </div>
+            
+            <div className="feature-item">
+              <Users size={48} className="feature-icon" style={{ color: '#8b5cf6' }} />
+              <h3 className="feature-title">Global Accessibility</h3>
+              <p className="feature-description">
+                Access your health records from anywhere in the world, share with any healthcare provider instantly.
+              </p>
+              <span className="feature-link">Learn more →</span>
+            </div>
+            
+            <div className="feature-item">
+              <Brain size={48} className="feature-icon" style={{ color: '#ef4444' }} />
+              <h3 className="feature-title">AI-Powered Insights</h3>
+              <p className="feature-description">
+                Get personalized health insights and recommendations powered by advanced machine learning algorithms.
+              </p>
+              <span className="feature-link">Learn more →</span>
+            </div>
+            
+            <div className="feature-item">
+              <Shield size={48} className="feature-icon" style={{ color: '#059669' }} />
+              <h3 className="feature-title">Provider Integration</h3>
+              <p className="feature-description">
+                Seamlessly connect with hospitals, clinics, and healthcare providers for instant record sharing.
+              </p>
+              <span className="feature-link">Learn more →</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Achievements Section */}
-      <section className="achievements">
-        <div className="container">
-          <div className="achievements-grid">
-            <div className="achievement-card">
-              <div className="achievement-icon">
-                <Database />
-              </div>
-              <div className="achievement-number">{counters.uploads.toLocaleString()}+</div>
-              <div className="achievement-label">Health Records Processed</div>
-            </div>
-            
-            <div className="achievement-card">
-              <div className="achievement-icon">
-                <Globe />
-              </div>
-              <div className="achievement-number">{counters.hospitals}+</div>
-              <div className="achievement-label">Partner Hospitals</div>
-            </div>
-            
-            <div className="achievement-card">
-              <div className="achievement-icon">
-                <Users />
-              </div>
-              <div className="achievement-number">{counters.users.toLocaleString()}+</div>
-              <div className="achievement-label">Active Users</div>
-            </div>
-            
-            <div className="achievement-card">
-              <div className="achievement-icon">
-                <Shield />
-              </div>
-              <div className="achievement-number">{counters.security}%</div>
-              <div className="achievement-label">Security Uptime</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section id="testimonials" className="testimonials">
+      {/* How It Works Section */}
+      <section id="how-it-works" className="how-it-works">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">What Our Users Say</h2>
+            <h2 className="section-title">How HealthVault Works</h2>
             <p className="section-subtitle">
-              Trusted by thousands of patients, providers, and researchers worldwide.
+              Simple steps to take control of your health data and start earning
             </p>
           </div>
           
-          <div className="testimonials-grid">
-            <div className="testimonial-card">
-              <div className="testimonial-header">
-                <img 
-                  src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop" 
-                  alt="Sarah Johnson" 
-                  className="testimonial-avatar"
-                />
-                <div className="testimonial-info">
-                  <h4>Sarah Johnson</h4>
-                  <span className="role patient">Patient</span>
-                </div>
-                <div className="testimonial-rating">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="star filled" />
-                  ))}
-                </div>
+          <div className="steps-container">
+            <div className="step">
+              <div className="step-number">01</div>
+              <div className="step-content">
+                <h3 className="step-title">Create Your Vault</h3>
+                <p className="step-description">
+                  Sign up with Internet Identity and create your secure health data vault in minutes.
+                </p>
               </div>
-              <p className="testimonial-text">
-                "HealthVault has transformed how I manage my health data. I can easily 
-                share my records with specialists and even earn from contributing to research. 
-                The security gives me complete peace of mind."
-              </p>
+              <div className="step-visual">
+                <UserCheck size={48} className="step-icon" />
+              </div>
             </div>
-
-            <div className="testimonial-card">
-              <div className="testimonial-header">
-                <img 
-                  src="https://images.pexels.com/photos/612807/pexels-photo-612807.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop" 
-                  alt="Dr. Michael Chen" 
-                  className="testimonial-avatar"
-                />
-                <div className="testimonial-info">
-                  <h4>Dr. Michael Chen</h4>
-                  <span className="role provider">Healthcare Provider</span>
-                </div>
-                <div className="testimonial-rating">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="star filled" />
-                  ))}
-                </div>
+            
+            <div className="step">
+              <div className="step-number">02</div>
+              <div className="step-content">
+                <h3 className="step-title">Upload Your Records</h3>
+                <p className="step-description">
+                  Securely upload your medical records, lab results, and health data with end-to-end encryption.
+                </p>
               </div>
-              <p className="testimonial-text">
-                "As a cardiologist, HealthVault has streamlined my practice. I can access 
-                patient histories instantly, collaborate with colleagues, and contribute to 
-                important research studies. It's the future of healthcare."
-              </p>
+              <div className="step-visual">
+                <Database size={48} className="step-icon" />
+              </div>
             </div>
-
-            <div className="testimonial-card">
-              <div className="testimonial-header">
-                <img 
-                  src="https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop" 
-                  alt="Dr. Emily Rodriguez" 
-                  className="testimonial-avatar"
-                />
-                <div className="testimonial-info">
-                  <h4>Dr. Emily Rodriguez</h4>
-                  <span className="role researcher">Medical Researcher</span>
-                </div>
-                <div className="testimonial-rating">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="star filled" />
-                  ))}
-                </div>
+            
+            <div className="step">
+              <div className="step-number">03</div>
+              <div className="step-content">
+                <h3 className="step-title">Control & Share</h3>
+                <p className="step-description">
+                  Decide who can access your data, when, and for what purpose. You maintain complete control.
+                </p>
               </div>
-              <p className="testimonial-text">
-                "HealthVault has accelerated our research exponentially. Access to 
-                anonymized, high-quality health data has enabled breakthroughs in our 
-                diabetes prevention study. The platform is a game-changer."
-              </p>
+              <div className="step-visual">
+                <Zap size={48} className="step-icon" />
+              </div>
+            </div>
+            
+            <div className="step">
+              <div className="step-number">04</div>
+              <div className="step-content">
+                <h3 className="step-title">Earn Rewards</h3>
+                <p className="step-description">
+                  Contribute anonymized data to research studies and earn cryptocurrency rewards for your participation.
+                </p>
+              </div>
+              <div className="step-visual">
+                <Star size={48} className="step-icon" />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contact" className="contact">
+      {/* Security Section */}
+      <section id="security" className="security">
         <div className="container">
-          <div className="contact-content">
-            <div className="contact-info">
-              <h2>Get in Touch</h2>
-              <p>
-                Ready to revolutionize your healthcare data management? 
-                Contact us today to learn more about HealthVault.
-              </p>
+          <div className="security-content">
+            <div>
+              <div className="section-header" style={{ textAlign: 'left', marginBottom: '3rem' }}>
+                <h2 className="section-title">Bank-Level Security</h2>
+                <p className="section-subtitle" style={{ margin: '0.5rem 0' }}>
+                  Your health data deserves the highest level of protection. We use cutting-edge cryptography and blockchain technology.
+                </p>
+              </div>
               
-              <div className="contact-methods">
-                <div className="contact-method">
-                  <Mail className="contact-icon" />
-                  <div>
-                    <h4>Email</h4>
-                    <p>support@healthvault.com</p>
+              <div className="security-features">
+                <div className="security-feature">
+                  <Lock size={32} className="security-feature-icon" style={{ color: '#3b82f6' }} />
+                  <div className="security-feature-content">
+                    <h4>End-to-End Encryption</h4>
+                    <p>AES-256 encryption ensures your data is protected at rest and in transit</p>
                   </div>
                 </div>
                 
-                <div className="contact-method">
-                  <Phone className="contact-icon" />
-                  <div>
-                    <h4>Phone</h4>
-                    <p>+91-8458745632</p>
+                <div className="security-feature">
+                  <Shield size={32} className="security-feature-icon" style={{ color: '#10b981' }} />
+                  <div className="security-feature-content">
+                    <h4>Zero-Knowledge Architecture</h4>
+                    <p>We never have access to your unencrypted data, ensuring complete privacy</p>
                   </div>
                 </div>
                 
-                <div className="contact-method">
-                  <MapPin className="contact-icon" />
-                  <div>
-                    <h4>Address</h4>
-                    <p>123 Health Tech Ave<br />India</p>
+                <div className="security-feature">
+                  <CheckCircle size={32} className="security-feature-icon" style={{ color: '#8b5cf6' }} />
+                  <div className="security-feature-content">
+                    <h4>Blockchain Immutability</h4>
+                    <p>Records stored on Internet Computer cannot be altered or deleted</p>
                   </div>
                 </div>
               </div>
-
-              <div className="social-links">
-                <a href="#" className="social-link">
-                  <Facebook />
-                </a>
-                <a href="#" className="social-link">
-                  <Twitter />
-                </a>
-                <a href="#" className="social-link">
-                  <Linkedin />
-                </a>
-                <a href="#" className="social-link">
-                  <Instagram />
-                </a>
+              
+              <button className="security-cta">View Security Details</button>
+            </div>
+            
+            <div className="security-visual">
+              <div className="security-shield">
+                <div className="shield-layers">
+                  <div className="shield-layer shield-layer-1"></div>
+                  <div className="shield-layer shield-layer-2"></div>
+                  <div className="shield-layer shield-layer-3"></div>
+                </div>
+                <Shield size={120} className="shield-center" style={{ color: '#3b82f6' }} />
               </div>
             </div>
+          </div>
+        </div>
+      </section>
 
-            <form className="contact-form" onSubmit={handleContactSubmit}>
-              <div className="form-group">
-                <label htmlFor="name">Full Name</label>
-                <input 
-                  type="text" 
-                  id="name" 
-                  name="name" 
-                  required 
-                  placeholder="Enter your full name"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="email">Email Address</label>
-                <input 
-                  type="email" 
-                  id="email" 
-                  name="email" 
-                  required 
-                  placeholder="Enter your email address"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="message">Message</label>
-                <textarea 
-                  id="message" 
-                  name="message" 
-                  rows="5" 
-                  required 
-                  placeholder="Tell us how we can help you..."
-                ></textarea>
-              </div>
-              
-              <button type="submit" className="submit-btn">
-                <span>Send Message</span>
-                <ArrowRight className="btn-icon" />
-              </button>
-            </form>
+      {/* CTA Section */}
+      <section className="cta">
+        <div className="container">
+          <div className="cta-content">
+            <h2 className="cta-title">Ready to Take Control?</h2>
+            <p className="cta-subtitle">
+              Join thousands of users who have already secured their health data and started earning rewards.
+            </p>
+            
+            <div className="cta-actions">
+              <button className="cta-btn-primary" onClick={handleGetStarted}>Create Your Vault</button>
+              <button className="cta-btn-secondary">Schedule Demo</button>
+            </div>
           </div>
         </div>
       </section>
@@ -488,65 +391,82 @@ const LandingPage = ({onLoginClick,onDemoLogin}) => {
       <footer className="footer">
         <div className="container">
           <div className="footer-content">
-            <div className="footer-section">
+            <div className="footer-brand">
               <div className="footer-logo">
-                <Shield className="logo-icon" />
-                <span className="logo-text">HealthVault</span>
+                <div className="footer-logo-icon">
+                  HV
+                </div>
+                <span className="footer-logo-text">HealthVault</span>
               </div>
+              
               <p className="footer-description">
-                Empowering healthcare through secure, blockchain-based data management 
-                and collaboration.
+                Empowering individuals to own, control, and monetize their health data through blockchain technology.
               </p>
+              
+              <div className="footer-social">
+                <a href="#" className="footer-social-link">
+                  <Facebook size={18} />
+                </a>
+                <a href="#" className="footer-social-link">
+                  <Twitter size={18} />
+                </a>
+                <a href="#" className="footer-social-link">
+                  <Instagram size={18} />
+                </a>
+                <a href="#" className="footer-social-link">
+                  <Linkedin size={18} />
+                </a>
+              </div>
             </div>
             
-            <div className="footer-section">
-              <h4>Quick Links</h4>
-              <ul className="footer-links">
-                <li><a href="#home" onClick={() => scrollToSection('home')}>Home</a></li>
-                <li><a href="#about" onClick={() => scrollToSection('about')}>About</a></li>
-                <li><a href="#testimonials" onClick={() => scrollToSection('testimonials')}>Testimonials</a></li>
-                <li><a href="#contact" onClick={() => scrollToSection('contact')}>Contact</a></li>
-              </ul>
-            </div>
-            
-            <div className="footer-section">
-              <h4>Platform</h4>
-              <ul className="footer-links">
-                <li><a href="#" onClick={handleLoginClick}>Login</a></li>
-                <li><a href="#">Privacy Policy</a></li>
-                <li><a href="#">Terms of Service</a></li>
-                <li><a href="#">Security</a></li>
-              </ul>
-            </div>
-            
-            <div className="footer-section">
-              <h4>Support</h4>
-              <ul className="footer-links">
-                <li><a href="#">Help Center</a></li>
-                <li><a href="#">Documentation</a></li>
-                <li><a href="#">API Reference</a></li>
-                <li><a href="#">Status</a></li>
-              </ul>
+            <div className="footer-links">
+              <div>
+                <h4 className="footer-column-title">Product</h4>
+                <a href="#" className="footer-link">Features</a>
+                <a href="#" className="footer-link">Security</a>
+                <a href="#" className="footer-link">API</a>
+              </div>
+              
+              <div>
+                <h4 className="footer-column-title">Company</h4>
+                <a href="#" className="footer-link">About</a>
+                <a href="#" className="footer-link">Careers</a>
+                <a href="#" className="footer-link">Press</a>
+                <a href="#" className="footer-link">Contact</a>
+              </div>
+              
+              <div>
+                <h4 className="footer-column-title">Resources</h4>
+                <a href="#" className="footer-link">Documentation</a>
+                <a href="#" className="footer-link">Help Center</a>
+                <a href="#" className="footer-link">Blog</a>
+                <a href="#" className="footer-link">Community</a>
+              </div>
+              
+              <div>
+                <h4 className="footer-column-title">Legal</h4>
+                <a href="#" className="footer-link">Privacy Policy</a>
+                <a href="#" className="footer-link">Terms of Service</a>
+                <a href="#" className="footer-link">Cookie Policy</a>
+                <a href="#" className="footer-link">GDPR</a>
+              </div>
             </div>
           </div>
           
           <div className="footer-bottom">
-            <p>&copy; 2024 HealthVault. All rights reserved.</p>
-            <div className="footer-badges">
-              <span className="badge">
-                <Award className="badge-icon" />
-                ISO Certified
-              </span>
-              <span className="badge">
-                <Shield className="badge-icon" />
-                HIPAA Compliant
-              </span>
+            <div className="footer-copyright">
+              © 2024 HealthVault Labs. All rights reserved.
+            </div>
+            <div className="footer-powered">
+              Powered by Internet Computer
             </div>
           </div>
         </div>
       </footer>
+
+
     </div>
   );
 };
 
-export default LandingPage;
+export default Landing;
