@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Users, FileText, Activity, Clock, Search, Filter, Download,
-  Shield, AlertCircle, CheckCircle, X, Trash
+  Shield, AlertCircle, CheckCircle, X, Trash,Send
 } from 'lucide-react';
 import StatCard from '../shared/StatCard';
 import { HttpAgent } from '@dfinity/agent';
@@ -19,11 +19,43 @@ const ProviderDashboard = () => {
   const [modal, setModal] = useState(null);
   const [formData, setFormData] = useState({
   requesterName: '',
-  requesterType: '',
+  recipients: [],
   dataType: '',
   purpose: '',
-  compensation: '',
+  message: '',
+  compensation: ''
 });
+const [searchRecipients, setSearchRecipients] = useState('');
+const [allUsers, setAllUsers] = useState([]);
+
+const toggleRecipient = (email) => {
+  setFormData((prev) => {
+    const alreadySelected = prev.recipients.includes(email);
+    return {
+      ...prev,
+      recipients: alreadySelected
+        ? prev.recipients.filter(e => e !== email)
+        : [...prev.recipients, email]
+    };
+  });
+};
+
+useEffect(() => {
+  const fetchUsers = async () => {
+    const authClient = await AuthClient.create();
+    const identity = await authClient.getIdentity();
+    const agent = new HttpAgent({ identity });
+    if (window.location.hostname === 'localhost') {
+      await agent.fetchRootKey();
+    }
+    const actor = createActor(canisterId, { agent });
+    const users = await actor.get_all_collaborators();
+ // update if you have another method
+    setAllUsers(users);
+  };
+  fetchUsers();
+}, []);
+
 
 
   // LocalStorage based dataRequests
@@ -103,11 +135,11 @@ const ProviderDashboard = () => {
   setDataRequests((prev) => [...prev, newRequest]);
   setFormData({
     requesterName: '',
-    requesterType: '', // ignored now
-    dataType: '',
-    purpose: '',
-    message: '',
-    compensation: '',
+  recipients: [], // 👈 ADD THIS
+  dataType: '',
+  purpose: '',
+  message: '',
+  compensation: '',
   });
   setModal(null);
 };
@@ -240,7 +272,7 @@ const ModalWrapper = React.memo(({ children }) => (
               <div className="flex justify-between items-center text-xs text-gray-500">
                 <span>{req.status === 'pending' ? 'Requested' : 'Approved'} on {req.date}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-green-600 font-medium">${req.compensation}</span>
+                  <span className="text-green-600 font-medium">{req.compensation} tokens</span>
                   <Trash className="cursor-pointer text-red-500" size={16} onClick={() => handleDeleteRequest(req.id)} />
                 </div>
               </div>
@@ -253,79 +285,126 @@ const ModalWrapper = React.memo(({ children }) => (
       {/* Modals */}
       {modal && <div className="modal-backdrop" onClick={handleClose}></div>}
 {modal === 'request' && (
-  <div className="modal">
-    <div className="modal-box">
-      <button className="modal-close" onClick={handleClose}><X /></button>
-      <h2 className="text-lg font-bold mb-4">New Data Request</h2>
-      <form className="space-y-4" onSubmit={handleAddRequest}>
-        <div>
-          <label className="text-sm font-medium">Requester Name</label>
-          <input
-            type="text"
-            className="input"
-            value={formData.requesterName}
-            onChange={(e) => setFormData({ ...formData, requesterName: e.target.value })}
-            required
-          />
-        </div>
+  <div className="modal-overlay">
+    <div className="modal modal-medium">
+      <div className="modal-header">
+        <h2>Send Data Request</h2>
+        <button onClick={() => setModal(null)} className="modal-close">
+          <X className="close-icon" />
+        </button>
+      </div>
 
-        <div>
-          <label className="text-sm font-medium">Data Type</label>
-          <select
-            className="input"
-            value={formData.dataType}
-            onChange={(e) => setFormData({ ...formData, dataType: e.target.value })}
-            required
-          >
-            <option value="">Select Data Type</option>
-            <option value="Cardiovascular Data">Cardiovascular Data</option>
-            <option value="Glucose Monitoring">Glucose Monitoring</option>
-            <option value="MRI Scans">MRI Scans</option>
-            <option value="Blood Reports">Blood Reports</option>
-            <option value="Genomic Sequences">Genomic Sequences</option>
-            <option value="X-Ray Records">X-Ray Records</option>
-          </select>
-        </div>
+      <div className="modal-body">
+        <form className="space-y-4" onSubmit={handleAddRequest}>
 
-        <div>
-          <label className="text-sm font-medium">Purpose</label>
-          <input
-            type="text"
-            className="input"
-            value={formData.purpose}
-            onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
-            required
-          />
-        </div>
+          <div className="form-group">
+            <label className="form-label">Requester Name</label>
+            <input
+              type="text"
+              className="form-input"
+              value={formData.requesterName}
+              onChange={(e) => setFormData({ ...formData, requesterName: e.target.value })}
+              required
+            />
+          </div>
 
-        <div>
-          <label className="text-sm font-medium">Message</label>
-          <textarea
-            className="input"
-            rows="3"
-            placeholder="Add additional context for the patient or provider..."
-            value={formData.message}
-            onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-          />
-        </div>
+          <div className="form-group">
+            <label className="form-label">Select Recipients (Providers or Researchers)</label>
+            <input
+              type="text"
+              value={searchRecipients}
+              onChange={(e) => setSearchRecipients(e.target.value)}
+              placeholder="Search users by name..."
+              className="form-input"
+            />
+            <div className="collaborator-list">
+              {allUsers
+                .filter(user =>
+                  user &&
+                  ['provider', 'researcher'].includes(user.role) &&
+                  user.name.toLowerCase().includes(searchRecipients.toLowerCase())
+                )
+                .map(user => (
+                  <label key={user.email} className="checkbox-item">
+                    <input
+                      type="checkbox"
+                      checked={formData.recipients.includes(user.email)}
+                      onChange={() => toggleRecipient(user.email)}
+                      className="checkbox-input"
+                    />
+                    <span className="checkbox-label">{user.name} ({user.role})</span>
+                  </label>
+                ))}
+            </div>
+          </div>
 
-        <div>
-          <label className="text-sm font-medium">Compensation (ICP Tokens)</label>
-          <input
-            type="number"
-            min="0"
-            className="input"
-            value={formData.compensation}
-            onChange={(e) => setFormData({ ...formData, compensation: e.target.value })}
-            required
-          />
-        </div>
+          <div className="form-group">
+            <label className="form-label">Data Type</label>
+            <select
+              className="form-input"
+              value={formData.dataType}
+              onChange={(e) => setFormData({ ...formData, dataType: e.target.value })}
+              required
+            >
+              <option value="">Select Data Type</option>
+              <option value="Cardiovascular Data">Cardiovascular Data</option>
+              <option value="Glucose Monitoring">Glucose Monitoring</option>
+              <option value="MRI Scans">MRI Scans</option>
+              <option value="Blood Reports">Blood Reports</option>
+              <option value="Genomic Sequences">Genomic Sequences</option>
+              <option value="X-Ray Records">X-Ray Records</option>
+            </select>
+          </div>
 
-        <button type="submit" className="submit-btn">📩 Send Data Request</button>
-      </form>
+          <div className="form-group">
+            <label className="form-label">Purpose</label>
+            <input
+              type="text"
+              className="form-input"
+              value={formData.purpose}
+              onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Message</label>
+            <textarea
+              rows={3}
+              className="form-textarea"
+              placeholder="Describe the reason for this data request..."
+              value={formData.message}
+              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Compensation (ICP Tokens)</label>
+            <input
+              type="number"
+              min="0"
+              className="form-input"
+              value={formData.compensation}
+              onChange={(e) => setFormData({ ...formData, compensation: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="modal-footer">
+            <button type="button" onClick={() => setModal(null)} className="btn-secondary">
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary btn-with-icon">
+              <Send className="btn-icon" />
+              <span>Send Request</span>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 )}
+
 
 
 
