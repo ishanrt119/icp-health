@@ -90,24 +90,25 @@ const ProviderDashboard = () => {
 
   const newRequest = {
     id: Date.now().toString(),
-    ...formData,
+    requesterName: formData.requesterName,
+    requesterType: 'provider', // defaulted
+    dataType: formData.dataType,
+    purpose: formData.purpose,
+    message: formData.message || '',
+    compensation: formData.compensation,
     status: 'pending',
     date: new Date().toISOString().split('T')[0],
   };
 
-  const updatedRequests = [...dataRequests, newRequest];
-
-  setDataRequests(updatedRequests);
-  localStorage.setItem('dataRequests', JSON.stringify(updatedRequests)); // ✅ This was missing
-
+  setDataRequests((prev) => [...prev, newRequest]);
   setFormData({
     requesterName: '',
-    requesterType: '',
+    requesterType: '', // ignored now
     dataType: '',
     purpose: '',
+    message: '',
     compensation: '',
   });
-
   setModal(null);
 };
 
@@ -243,9 +244,7 @@ const ModalWrapper = React.memo(({ children }) => (
                   <Trash className="cursor-pointer text-red-500" size={16} onClick={() => handleDeleteRequest(req.id)} />
                 </div>
               </div>
-              {req.status === 'pending' && (
-                <button className="text-xs text-blue-600 mt-2" onClick={() => handleApprove(req.id)}>✅ Approve</button>
-              )}
+              
             </div>
           ))}
         </div>
@@ -258,7 +257,7 @@ const ModalWrapper = React.memo(({ children }) => (
     <div className="modal-box">
       <button className="modal-close" onClick={handleClose}><X /></button>
       <h2 className="text-lg font-bold mb-4">New Data Request</h2>
-      <form className="space-y-3" onSubmit={handleAddRequest}>
+      <form className="space-y-4" onSubmit={handleAddRequest}>
         <div>
           <label className="text-sm font-medium">Requester Name</label>
           <input
@@ -269,29 +268,25 @@ const ModalWrapper = React.memo(({ children }) => (
             required
           />
         </div>
-        <div>
-          <label className="text-sm font-medium">Requester Type</label>
-          <select
-            className="input"
-            value={formData.requesterType}
-            onChange={(e) => setFormData({ ...formData, requesterType: e.target.value })}
-            required
-          >
-            <option value="">Select Type</option>
-            <option value="provider">Provider</option>
-            <option value="researcher">Researcher</option>
-          </select>
-        </div>
+
         <div>
           <label className="text-sm font-medium">Data Type</label>
-          <input
-            type="text"
+          <select
             className="input"
             value={formData.dataType}
             onChange={(e) => setFormData({ ...formData, dataType: e.target.value })}
             required
-          />
+          >
+            <option value="">Select Data Type</option>
+            <option value="Cardiovascular Data">Cardiovascular Data</option>
+            <option value="Glucose Monitoring">Glucose Monitoring</option>
+            <option value="MRI Scans">MRI Scans</option>
+            <option value="Blood Reports">Blood Reports</option>
+            <option value="Genomic Sequences">Genomic Sequences</option>
+            <option value="X-Ray Records">X-Ray Records</option>
+          </select>
         </div>
+
         <div>
           <label className="text-sm font-medium">Purpose</label>
           <input
@@ -302,21 +297,36 @@ const ModalWrapper = React.memo(({ children }) => (
             required
           />
         </div>
+
         <div>
-          <label className="text-sm font-medium">Compensation ($)</label>
+          <label className="text-sm font-medium">Message</label>
+          <textarea
+            className="input"
+            rows="3"
+            placeholder="Add additional context for the patient or provider..."
+            value={formData.message}
+            onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Compensation (ICP Tokens)</label>
           <input
             type="number"
+            min="0"
             className="input"
             value={formData.compensation}
             onChange={(e) => setFormData({ ...formData, compensation: e.target.value })}
             required
           />
         </div>
+
         <button type="submit" className="submit-btn">📩 Send Data Request</button>
       </form>
     </div>
   </div>
 )}
+
 
 
 
