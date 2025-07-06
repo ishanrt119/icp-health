@@ -99,6 +99,26 @@ useEffect(() => {
     fetchUploads();
   }, []);
 
+  const [currentUserEmail, setCurrentUserEmail] = useState('');
+
+useEffect(() => {
+  const fetchIdentity = async () => {
+    const authClient = await AuthClient.create();
+    const identity = await authClient.getIdentity();
+    const principal = identity.getPrincipal().toText();
+
+    const agent = new HttpAgent({ identity });
+    if (window.location.hostname === 'localhost') {
+      await agent.fetchRootKey();
+    }
+    const actor = createActor(canisterId, { agent });
+
+    const user = await actor.get_user_by_principal(principal); // ⬅ ensure this function exists
+    setCurrentUserEmail(user.email); // assuming your user object has `email`
+  };
+  fetchIdentity();
+}, []);
+
   const handleClose = () => setModal(null);
 
   const handleDownload = (patient) => {
@@ -121,16 +141,25 @@ useEffect(() => {
   e.preventDefault();
 
   const newRequest = {
-    id: Date.now().toString(),
-    requesterName: formData.requesterName,
-    requesterType: 'provider', // defaulted
-    dataType: formData.dataType,
-    purpose: formData.purpose,
-    message: formData.message || '',
-    compensation: formData.compensation,
-    status: 'pending',
-    date: new Date().toISOString().split('T')[0],
-  };
+  id: Date.now().toString(),
+  requesterName: formData.requesterName,
+  requesterType: 'provider',
+  dataType: formData.dataType,
+  purpose: formData.purpose,
+  message: formData.message || '',
+  compensation: formData.compensation,
+  recipients: formData.recipients, // important
+  type: 'sent', // 👈 identify sent request
+  status: 'pending',
+  date: new Date().toISOString().split('T')[0],
+};
+const handleDecline = (id) => {
+  const updated = dataRequests.map(r =>
+    r.id === id ? { ...r, status: 'declined' } : r
+  );
+  setDataRequests(updated);
+  localStorage.setItem('dataRequests', JSON.stringify(updated));
+};
 
   setDataRequests((prev) => [...prev, newRequest]);
   setFormData({
@@ -262,23 +291,45 @@ const ModalWrapper = React.memo(({ children }) => (
             <button className="text-green-600 hover:text-green-800 text-sm font-medium" onClick={() => setModal('request')}>New Request</button>
           </div>
 
-          {dataRequests.map((req) => (
-            <div key={req.id} className="border border-gray-100 rounded-lg p-4 mb-4">
-              <div className="flex items-start justify-between mb-2">
-                <h4 className="font-medium text-gray-900">{req.dataType}</h4>
-                <span className={`badge ${req.status === 'pending' ? 'yellow' : 'green'}`}>{req.status}</span>
-              </div>
-              <p className="text-sm text-gray-600 mb-2">{req.requesterName} - {req.purpose}</p>
-              <div className="flex justify-between items-center text-xs text-gray-500">
-                <span>{req.status === 'pending' ? 'Requested' : 'Approved'} on {req.date}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-green-600 font-medium">{req.compensation} tokens</span>
-                  <Trash className="cursor-pointer text-red-500" size={16} onClick={() => handleDeleteRequest(req.id)} />
-                </div>
-              </div>
-              
-            </div>
-          ))}
+          {dataRequests.map((req) => {
+  const isReceived = req.type !== 'sent' && req.recipients?.includes(currentUserEmail); // assuming `currentUserEmail` is available
+
+  return (
+    <div key={req.id} className="border border-gray-100 rounded-lg p-4 mb-4">
+      <div className="flex items-start justify-between mb-2">
+        <h4 className="font-medium text-gray-900">{req.dataType}</h4>
+        <span className={`badge ${req.status === 'pending' ? 'yellow' : 'green'}`}>{req.status}</span>
+      </div>
+
+      <p className="text-sm text-gray-600 mb-2">
+  {isReceived 
+    ? `From: ${req.requesterName}` 
+    : `To: ${req.recipients?.join(', ') || 'N/A'}`
+  } - {req.purpose}
+</p>
+
+
+      <div className="flex justify-between items-center text-xs text-gray-500">
+        <span>{req.status === 'pending' ? 'Requested' : 'Approved'} on {req.date}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-green-600 font-medium">{req.compensation} tokens</span>
+          {!isReceived && (
+            <Trash className="cursor-pointer text-red-500" size={16} onClick={() => handleDeleteRequest(req.id)} />
+          )}
+        </div>
+      </div>
+
+      {/* Accept/Decline for received requests */}
+      {isReceived && req.status === 'pending' && (
+        <div className="flex gap-2 mt-2">
+          <button onClick={() => handleApprove(req.id)} className="btn-primary text-xs py-1 px-3">Accept</button>
+          <button onClick={() => handleDecline(req.id)} className="btn-secondary text-xs py-1 px-3">Decline</button>
+        </div>
+      )}
+    </div>
+  );
+})}
+
         </div>
       </div>
 
