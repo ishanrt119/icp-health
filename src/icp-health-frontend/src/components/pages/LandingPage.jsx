@@ -35,37 +35,45 @@ const LandingPage = ({onLoginClick,onDemoLogin}) => {
 
   // Animated counter effect
   useEffect(() => {
-    const targets = {
-      uploads: 10000,
-      hospitals: 50,
-      users: 25000,
-      security: 99.9
-    };
+  const targets = {
+    uploads: 10000,
+    hospitals: 50,
+    users: 25000,
+    security: 99.9
+  };
 
-    const duration = 2000; // 2 seconds
-    const steps = 60;
-    const stepTime = duration / steps;
+  const duration = 2000; // 2 seconds
+  const steps = 60;
+  const stepTime = duration / steps;
 
-    const intervals = Object.keys(targets).map(key => {
-      const target = targets[key];
-      const increment = target / steps;
-      let current = 0;
+  const intervalIds = [];
 
-      return setInterval(() => {
-        current += increment;
-        if (current >= target) {
-          current = target;
-          clearInterval(intervals.find(i => i === interval));
-        }
-        setCounters(prev => ({
-          ...prev,
-          [key]: key === 'security' ? current.toFixed(1) : Math.floor(current)
-        }));
-      }, stepTime);
-    });
+  Object.keys(targets).forEach(key => {
+    const target = targets[key];
+    const increment = target / steps;
+    let current = 0;
 
-    return () => intervals.forEach(clearInterval);
-  }, []);
+    const id = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        current = target;
+        clearInterval(id);
+      }
+
+      setCounters(prev => ({
+        ...prev,
+        [key]: key === 'security' ? current.toFixed(1) : Math.floor(current)
+      }));
+    }, stepTime);
+
+    intervalIds.push(id);
+  });
+
+  return () => {
+    intervalIds.forEach(clearInterval);
+  };
+}, []);
+
 
   const handleLoginClick = () => {
     onLoginClick();

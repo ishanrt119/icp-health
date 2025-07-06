@@ -3,6 +3,10 @@ use crate::models::{User, UploadBlock, UserPublic};
 use crate::storage::{USERS, UPLOAD_CHAINS};
 use sha2::{Sha256, Digest};
 use candid::Principal;
+use crate::models::DataRequest;
+use crate::storage::DATA_REQUESTS;
+use ic_cdk_macros::{update, query};
+
 
 fn current_timestamp() -> u64 {
     time() / 1_000_000_000
@@ -17,6 +21,25 @@ fn calculate_hash(index: u64, timestamp: u64, file_name: &str, doc_type: &str, s
     hasher.update(subtype);
     hasher.update(previous_hash);
     format!("{:x}", hasher.finalize())
+}
+
+pub fn submit_data_request(request: DataRequest) {
+    ic_cdk::println!(
+    "📩 New request submitted for recipients: {:?}", 
+    request.recipients
+);
+
+    DATA_REQUESTS.with(|reqs| reqs.borrow_mut().push(request));
+}
+
+pub fn get_data_requests_by_email(email: String) -> Vec<DataRequest> {
+    DATA_REQUESTS.with(|reqs| {
+        reqs.borrow()
+            .iter()
+            .filter(|r| r.recipients.contains(&email) && !r.requester_email.is_empty()) // skip malformed
+            .cloned()
+            .collect()
+    })
 }
 
 pub fn upload_document(

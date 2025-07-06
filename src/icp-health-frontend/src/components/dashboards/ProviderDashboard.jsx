@@ -14,6 +14,11 @@ import './provider.css';
 const canisterId = import.meta.env.VITE_CANISTER_ID_ICP_HEALTH_BACKEND;
 
 const ProviderDashboard = () => {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [dataRequests, setDataRequests] = useState([]);
+
+  const sentRequests = dataRequests.filter(req => req.requesterName === currentUserName);  // ✅ Now safe
+  const [receivedRequests, setReceivedRequests] = useState([]);
   const [lastLogin, setLastLogin] = useState('Unknown');
   const [uploads, setUploads] = useState([]);
   const [modal, setModal] = useState(null);
@@ -28,6 +33,22 @@ const ProviderDashboard = () => {
 const [searchRecipients, setSearchRecipients] = useState('');
 const [allUsers, setAllUsers] = useState([]);
 
+const handleApprove = (id) => {
+  const updated = receivedRequests.map(req =>
+    req.id === id ? { ...req, status: 'approved' } : req
+  );
+  setReceivedRequests(updated);
+};
+
+const handleDecline = (id) => {
+  const updated = receivedRequests.map(req =>
+    req.id === id ? { ...req, status: 'declined' } : req
+  );
+  setReceivedRequests(updated);
+};
+
+
+
 const toggleRecipient = (email) => {
   setFormData((prev) => {
     const alreadySelected = prev.recipients.includes(email);
@@ -40,33 +61,65 @@ const toggleRecipient = (email) => {
   });
 };
 
+ useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const authClient = await AuthClient.create();
+      const identity = await authClient.getIdentity();
+      const agent = new HttpAgent({ identity });
+
+      if (window.location.hostname === 'localhost') {
+        await agent.fetchRootKey();
+      }
+
+      const actor = createActor(canisterId, { agent });
+      try {
+        const user = await actor.get_user();
+        setCurrentUser(user);
+      } catch (err) {
+        console.error("Failed to fetch user info:", err);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
+
 useEffect(() => {
-  const fetchUsers = async () => {
-    const authClient = await AuthClient.create();
-    const identity = await authClient.getIdentity();
-    const agent = new HttpAgent({ identity });
-    if (window.location.hostname === 'localhost') {
-      await agent.fetchRootKey();
-    }
-    const actor = createActor(canisterId, { agent });
-    const users = await actor.get_all_collaborators();
- // update if you have another method
-    setAllUsers(users);
-  };
-  fetchUsers();
-}, []);
+    const fetchRequests = async () => {
+      const authClient = await AuthClient.create();
+      const identity = await authClient.getIdentity();
+      const agent = new HttpAgent({ identity });
+      if (window.location.hostname === 'localhost') {
+        await agent.fetchRootKey();
+      }
+      const actor = createActor(canisterId, { agent });
+
+      const user = await actor.get_user();
+      const response = await actor.get_data_requests_by_email(user.email);
+      setReceivedRequests(response);
+    };
+    fetchRequests();
+  }, []);
 
 
 
-  // LocalStorage based dataRequests
-  const [dataRequests, setDataRequests] = useState(() => {
-    const stored = localStorage.getItem('dataRequests');
-    return stored ? JSON.parse(stored) : mockDataRequests;
-  });
+useEffect(() => {
+    const fetchUsers = async () => {
+      const authClient = await AuthClient.create();
+      const identity = await authClient.getIdentity();
+      const agent = new HttpAgent({ identity });
+      if (window.location.hostname === 'localhost') {
+        await agent.fetchRootKey();
+      }
+      const actor = createActor(canisterId, { agent });
+      const users = await actor.get_all_collaborators();
+      setAllUsers(users);
+    };
+    fetchUsers();
+  }, []);
 
   const pendingRequests = dataRequests.filter(r => r.status === 'pending').length;
 
-  useEffect(() => {
+    useEffect(() => {
     const stored = localStorage.getItem('lastLogin');
     if (stored) {
       setLastLogin(formatDistanceToNow(new Date(stored), { addSuffix: true }));
@@ -99,7 +152,6 @@ useEffect(() => {
     fetchUploads();
   }, []);
 
-  const [currentUserEmail, setCurrentUserEmail] = useState('');
 
 useEffect(() => {
   const fetchIdentity = async () => {
@@ -113,8 +165,8 @@ useEffect(() => {
     }
     const actor = createActor(canisterId, { agent });
 
-    const user = await actor.get_user_by_principal(principal); // ⬅ ensure this function exists
-    setCurrentUserEmail(user.email); // assuming your user object has `email`
+    const user = await actor.get_user();// ⬅ ensure this function exists
+    
   };
   fetchIdentity();
 }, []);
@@ -137,53 +189,49 @@ useEffect(() => {
     URL.revokeObjectURL(link.href);
   };
 
- const handleAddRequest = (e) => {
-  e.preventDefault();
+ const handleAddRequest = async (e) => {
+    e.preventDefault();
 
-  const newRequest = {
-  id: Date.now().toString(),
-  requesterName: formData.requesterName,
-  requesterType: 'provider',
-  dataType: formData.dataType,
-  purpose: formData.purpose,
-  message: formData.message || '',
-  compensation: formData.compensation,
-  recipients: formData.recipients, // important
-  type: 'sent', // 👈 identify sent request
-  status: 'pending',
-  date: new Date().toISOString().split('T')[0],
-};
-const handleDecline = (id) => {
-  const updated = dataRequests.map(r =>
-    r.id === id ? { ...r, status: 'declined' } : r
-  );
-  setDataRequests(updated);
-  localStorage.setItem('dataRequests', JSON.stringify(updated));
-};
+    try {
+      const authClient = await AuthClient.create();
+      const identity = await authClient.getIdentity();
+      const agent = new HttpAgent({ identity });
 
-  setDataRequests((prev) => [...prev, newRequest]);
-  setFormData({
-    requesterName: '',
-  recipients: [], // 👈 ADD THIS
-  dataType: '',
-  purpose: '',
-  message: '',
-  compensation: '',
-  });
-  setModal(null);
-};
+      if (window.location.hostname === 'localhost') {
+        await agent.fetchRootKey();
+      }
 
+      const actor = createActor(canisterId, { agent });
 
-  const handleDeleteRequest = (id) => {
-    const updated = dataRequests.filter(r => r.id !== id);
-    setDataRequests(updated);
-    localStorage.setItem('dataRequests', JSON.stringify(updated));
-  };
+      const request = {
+        id: Date.now().toString(),
+        requester_name: currentUser?.name,
+        requester_email: currentUser?.email,
+        recipients: formData.recipients,
+        data_type: formData.dataType,
+        purpose: formData.purpose,
+        message: formData.message || '',
+        compensation: formData.compensation.toString(),
+        status: "pending",
+        date: new Date().toISOString(),
+      };
 
-  const handleApprove = (id) => {
-    const updated = dataRequests.map(r => r.id === id ? { ...r, status: 'approved' } : r);
-    setDataRequests(updated);
-    localStorage.setItem('dataRequests', JSON.stringify(updated));
+      await actor.submit_data_request(request);
+
+      alert("Request sent successfully!");
+      setFormData({
+        requesterName: '',
+        recipients: [],
+        dataType: '',
+        purpose: '',
+        message: '',
+        compensation: ''
+      });
+      setModal(null);
+    } catch (error) {
+      console.error("Error submitting data request:", error);
+      alert("An unexpected error occurred.");
+    }
   };
 
   const patientData = uploads.map((doc, index) => ({
@@ -214,11 +262,15 @@ const ModalWrapper = React.memo(({ children }) => (
 
 
   return (
-    <div className="space-y-6 provider-dashboard">
-      <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-xl p-6 text-white">
-        <h2 className="text-2xl font-bold mb-2">Healthcare Provider Portal</h2>
-        <p className="opacity-90">Access patient data securely with proper consent and compensation.</p>
-      </div>
+    <div className='p-4'>
+      {!currentUser ? (
+        <div>Loading user data...</div>
+      ) : (
+        <div className="space-y-6 provider-dashboard">
+          <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-xl p-6 text-white">
+            <h2 className="text-2xl font-bold mb-2">Healthcare Provider Portal</h2>
+            <p className="opacity-90">Access patient data securely with proper consent and compensation.</p>
+          </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" style={{ justifyContent: 'space-evenly' }}>
         <StatCard title="Active Patients" value={patients} icon={Users} color="green" />
@@ -291,44 +343,34 @@ const ModalWrapper = React.memo(({ children }) => (
             <button className="text-green-600 hover:text-green-800 text-sm font-medium" onClick={() => setModal('request')}>New Request</button>
           </div>
 
-          {dataRequests.map((req) => {
-  const isReceived = req.type !== 'sent' && req.recipients?.includes(currentUserEmail); // assuming `currentUserEmail` is available
-
-  return (
-    <div key={req.id} className="border border-gray-100 rounded-lg p-4 mb-4">
-      <div className="flex items-start justify-between mb-2">
-        <h4 className="font-medium text-gray-900">{req.dataType}</h4>
-        <span className={`badge ${req.status === 'pending' ? 'yellow' : 'green'}`}>{req.status}</span>
-      </div>
-
-      <p className="text-sm text-gray-600 mb-2">
-  {isReceived 
-    ? `From: ${req.requesterName}` 
-    : `To: ${req.recipients?.join(', ') || 'N/A'}`
-  } - {req.purpose}
-</p>
-
-
-      <div className="flex justify-between items-center text-xs text-gray-500">
-        <span>{req.status === 'pending' ? 'Requested' : 'Approved'} on {req.date}</span>
-        <div className="flex items-center gap-2">
+          <h4 className="text-sm font-semibold text-gray-700 mb-2">Received Requests</h4>
+  {receivedRequests.length > 0 ? (
+    receivedRequests.map((req,index) => (
+      <div key={index} className="border border-gray-100 rounded-lg p-4 mb-4">
+        <div className="flex items-start justify-between mb-2">
+          <h4 className="font-medium text-gray-900">{req.dataType}</h4>
+          <span className={`badge ${req.status === 'pending' ? 'yellow' : 'green'}`}>{req.status}</span>
+        </div>
+        <p className="text-sm text-gray-600 mb-2">
+          From: {req.requesterName} - {req.purpose}
+        </p>
+        <div className="flex justify-between items-center text-xs text-gray-500">
+          <span>Requested on {req.date}</span>
           <span className="text-green-600 font-medium">{req.compensation} tokens</span>
-          {!isReceived && (
-            <Trash className="cursor-pointer text-red-500" size={16} onClick={() => handleDeleteRequest(req.id)} />
-          )}
         </div>
-      </div>
 
-      {/* Accept/Decline for received requests */}
-      {isReceived && req.status === 'pending' && (
-        <div className="flex gap-2 mt-2">
-          <button onClick={() => handleApprove(req.id)} className="btn-primary text-xs py-1 px-3">Accept</button>
-          <button onClick={() => handleDecline(req.id)} className="btn-secondary text-xs py-1 px-3">Decline</button>
-        </div>
-      )}
-    </div>
-  );
-})}
+        {req.status === 'pending' && (
+          <div className="flex gap-2 mt-2">
+            <button className="btn-primary text-xs" onClick={() => handleApprove(req.id)}>Accept</button>
+            <button className="btn-secondary text-xs" onClick={() => handleDecline(req.id)}>Decline</button>
+          </div>
+        )}
+      </div>
+    ))
+  ) : (
+    <p className="text-sm text-gray-500 italic">No received requests.</p>
+  )}
+
 
         </div>
       </div>
@@ -481,6 +523,9 @@ const ModalWrapper = React.memo(({ children }) => (
       )}
       
     </div>
+      )}
+      </div>
+    
   );
 };
 

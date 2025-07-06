@@ -44,3 +44,18 @@ pub struct UploadRecord {
     pub earning: u32,
     pub timestamp: u64,
 }
+
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
+pub struct DataRequest {
+    pub id: String,
+    pub requester_name: String,
+    pub requester_email: String,
+    pub recipients: Vec<String>,
+    pub data_type: String,
+    pub purpose: String,
+    pub message: String,
+    pub compensation: String,
+    pub status: String,
+    pub date: String,
+}
+

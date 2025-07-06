@@ -50,6 +50,15 @@ fn get_all_collaborators() -> Vec<UserPublic> {
     handlers::get_all_collaborators()
 }
 
+#[update]
+fn submit_data_request(request: models::DataRequest) {
+    handlers::submit_data_request(request)
+}
+
+#[query]
+fn get_data_requests_by_email(email: String) -> Vec<models::DataRequest> {
+    handlers::get_data_requests_by_email(email)
+}
 
 #[update]
 fn delete_upload(hash: String) -> Result<(), String> {
