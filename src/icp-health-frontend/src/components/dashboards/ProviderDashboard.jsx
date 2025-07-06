@@ -1,118 +1,155 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users, FileText, Activity, Clock, Search, Filter, Download,
-  Shield, AlertCircle, CheckCircle, X
+  Shield, AlertCircle, CheckCircle, X, Trash
 } from 'lucide-react';
 import StatCard from '../shared/StatCard';
 import { HttpAgent } from '@dfinity/agent';
 import { formatDistanceToNow } from 'date-fns';
 import { AuthClient } from '@dfinity/auth-client';
 import { createActor } from '../../../../declarations/icp-health-backend';
-import { healthRecords, dataRequests } from '../../utils/mockData';
+import { healthRecords, dataRequests as mockDataRequests } from '../../utils/mockData';
 import './provider.css';
+
 const canisterId = import.meta.env.VITE_CANISTER_ID_ICP_HEALTH_BACKEND;
 
 const ProviderDashboard = () => {
-
-
-
   const [lastLogin, setLastLogin] = useState('Unknown');
+  const [uploads, setUploads] = useState([]);
+  const [modal, setModal] = useState(null);
+  const [formData, setFormData] = useState({
+  requesterName: '',
+  requesterType: '',
+  dataType: '',
+  purpose: '',
+  compensation: '',
+});
 
-useEffect(() => {
-  const stored = localStorage.getItem('lastLogin');
 
-  if (stored) {
-    setLastLogin(formatDistanceToNow(new Date(stored), { addSuffix: true }));
-  } else {
-    setLastLogin('Unknown');
-  }
-
-  const intervalId = setInterval(() => {
-    const stored = localStorage.getItem('lastLogin');
-    if (stored) {
-      setLastLogin(formatDistanceToNow(new Date(stored), { addSuffix: true }));
-    }
-  }, 60 * 1000);
-
-  return () => clearInterval(intervalId);
-}, []);
-
+  // LocalStorage based dataRequests
+  const [dataRequests, setDataRequests] = useState(() => {
+    const stored = localStorage.getItem('dataRequests');
+    return stored ? JSON.parse(stored) : mockDataRequests;
+  });
 
   const pendingRequests = dataRequests.filter(r => r.status === 'pending').length;
 
-  const [modal, setModal] = useState(null); // 'download', 'request', 'search', 'filter'
+  useEffect(() => {
+    const stored = localStorage.getItem('lastLogin');
+    if (stored) {
+      setLastLogin(formatDistanceToNow(new Date(stored), { addSuffix: true }));
+    } else {
+      setLastLogin('Unknown');
+    }
+
+    const intervalId = setInterval(() => {
+      const stored = localStorage.getItem('lastLogin');
+      if (stored) {
+        setLastLogin(formatDistanceToNow(new Date(stored), { addSuffix: true }));
+      }
+    }, 60 * 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    const fetchUploads = async () => {
+      const authClient = await AuthClient.create();
+      const identity = await authClient.getIdentity();
+      const agent = new HttpAgent({ identity });
+      if (window.location.hostname === 'localhost') {
+        await agent.fetchRootKey();
+      }
+      const actor = createActor(canisterId, { agent });
+      const docs = await actor.get_uploads_for_doctor();
+      setUploads(docs);
+    };
+    fetchUploads();
+  }, []);
 
   const handleClose = () => setModal(null);
 
-  const [uploads, setUploads] = useState([]);
-  useEffect(() => {
-  const fetchUploads = async () => {
-    const authClient = await AuthClient.create();
-    const identity = await authClient.getIdentity();
-    
-    const agent = new HttpAgent({ identity });
-
-    if (window.location.hostname === "localhost") {
-      await agent.fetchRootKey(); 
-    }
-
-    const actor = createActor(canisterId, { agent });
-    const docs = await actor.get_uploads_for_doctor();
-    console.log(docs);
-    setUploads(docs);
+  const handleDownload = (patient) => {
+    const matched = uploads.find(u => u.hash === patient.hash);
+    if (!matched?.file_content || !matched?.file_name) return alert("No file found");
+    const byteArray = Uint8Array.from(atob(matched.file_content), c => c.charCodeAt(0));
+    const blob = new Blob([byteArray]);
+    const date = new Date(Number(matched.timestamp));
+    const name = matched.file_name.replace(/\.[^/.]+$/, '');
+    const ext = matched.file_name.includes('.') ? '' : '.txt';
+    const finalName = `${name}_${date.toISOString().replace(/[:T]/g, '-').split('.')[0]}${ext}`;
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = finalName;
+    link.click();
+    URL.revokeObjectURL(link.href);
   };
 
-  fetchUploads();
-}, []);
+ const handleAddRequest = (e) => {
+  e.preventDefault();
 
+  const newRequest = {
+    id: Date.now().toString(),
+    ...formData,
+    status: 'pending',
+    date: new Date().toISOString().split('T')[0],
+  };
 
- const handleDownload = (patient) => {
-  const matchedUpload = uploads.find((u) => u.hash === patient.hash);
-  if (!matchedUpload || !matchedUpload.file_content || !matchedUpload.file_name) {
-    alert("No file found");
-    return;
-  }
+  const updatedRequests = [...dataRequests, newRequest];
 
-  const byteArray = Uint8Array.from(atob(matchedUpload.file_content), c => c.charCodeAt(0));
-  const blob = new Blob([byteArray]);
+  setDataRequests(updatedRequests);
+  localStorage.setItem('dataRequests', JSON.stringify(updatedRequests)); // ✅ This was missing
 
-  // Format timestamp as YYYY-MM-DD_HH-MM
-  const timestamp = new Date(Number(matchedUpload.timestamp));
-  const formattedTimestamp = timestamp.toISOString().replace(/[:T]/g, '-').split('.')[0]; // e.g., "2025-07-02-21-00-00"
+  setFormData({
+    requesterName: '',
+    requesterType: '',
+    dataType: '',
+    purpose: '',
+    compensation: '',
+  });
 
-  // Construct download filename with timestamp
-  const extension = matchedUpload.file_name.includes('.') ? '' : '.txt';
-  const baseName = matchedUpload.file_name.replace(/\.[^/.]+$/, ''); 
-  const finalName = `${baseName}_${formattedTimestamp}${extension}`;
-
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = finalName;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  setModal(null);
 };
 
 
+  const handleDeleteRequest = (id) => {
+    const updated = dataRequests.filter(r => r.id !== id);
+    setDataRequests(updated);
+    localStorage.setItem('dataRequests', JSON.stringify(updated));
+  };
 
-  const ModalWrapper = ({ children }) => (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button className="modal-close-btn" onClick={handleClose}><X /></button>
-        {children}
-      </div>
-    </div>
-  );
+  const handleApprove = (id) => {
+    const updated = dataRequests.map(r => r.id === id ? { ...r, status: 'approved' } : r);
+    setDataRequests(updated);
+    localStorage.setItem('dataRequests', JSON.stringify(updated));
+  };
 
   const patientData = uploads.map((doc, index) => ({
-  id: index,
-  name: doc.patient_name || 'Unknown',
-  lastVisit: Number(doc.timestamp || Date.now()),
-  dataShared: 1,
-  status: 'Active'
-}));
- const patientNames = new Set(uploads.map(doc => doc.patient_name || 'Unknown'));
-const patients = patientNames.size;
-const dataAccess = patientData.length;
+    id: index,
+    name: doc.patient_name || 'Unknown',
+    lastVisit: Number(doc.timestamp || Date.now()),
+    dataShared: 1,
+    status: 'Active',
+    hash: doc.hash
+  }));
+
+  const patientNames = new Set(uploads.map(doc => doc.patient_name || 'Unknown'));
+  const patients = patientNames.size;
+  const dataAccess = patientData.length;
+
+const ModalWrapper = React.memo(({ children }) => (
+  <div className="modal-overlay">
+    <div className="modal-content">
+      <button className="modal-close-btn" onClick={handleClose}><X /></button>
+      {children}
+    </div>
+  </div>
+));
+
+
+
+
+
 
   return (
     <div className="space-y-6 provider-dashboard">
@@ -145,7 +182,7 @@ const dataAccess = patientData.length;
                 <tr className="text-left text-sm text-gray-500 border-b">
                   <th className="pb-3">Patient</th>
                   <th className="pb-3">Last Visit</th>
-                  <th className="pb-3" style={{ minWidth: '100px', maxWidth: '250px' }}>Data Shared</th>
+                  <th className="pb-3">Data Shared</th>
                   <th className="pb-3">Status</th>
                   <th className="pb-3">Actions</th>
                 </tr>
@@ -163,12 +200,9 @@ const dataAccess = patientData.length;
                         <span className="font-medium text-gray-900">{patient.name}</span>
                       </div>
                     </td>
-                   <td className="py-4 text-gray-600">
+                    <td className="py-4 text-gray-600">
                       {new Date(patient.lastVisit * 1000).toLocaleString()}
                     </td>
-
-
-
                     <td className="py-4"><span className="badge blue">{patient.dataShared} records</span></td>
                     <td className="py-4">
                       <div className="flex items-center space-x-1">
@@ -180,7 +214,6 @@ const dataAccess = patientData.length;
                       <button className="icon-btn" onClick={() => handleDownload(patient)} title="Download file">
                         <Download />
                       </button>
-
                     </td>
                   </tr>
                 ))}
@@ -203,42 +236,89 @@ const dataAccess = patientData.length;
                 <span className={`badge ${req.status === 'pending' ? 'yellow' : 'green'}`}>{req.status}</span>
               </div>
               <p className="text-sm text-gray-600 mb-2">{req.requesterName} - {req.purpose}</p>
-              <div className="flex justify-between text-xs text-gray-500">
+              <div className="flex justify-between items-center text-xs text-gray-500">
                 <span>{req.status === 'pending' ? 'Requested' : 'Approved'} on {req.date}</span>
-                <span className="text-green-600 font-medium">${req.compensation}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-green-600 font-medium">${req.compensation}</span>
+                  <Trash className="cursor-pointer text-red-500" size={16} onClick={() => handleDeleteRequest(req.id)} />
+                </div>
               </div>
+              {req.status === 'pending' && (
+                <button className="text-xs text-blue-600 mt-2" onClick={() => handleApprove(req.id)}>✅ Approve</button>
+              )}
             </div>
           ))}
         </div>
       </div>
 
-      
-
       {/* Modals */}
-      {modal === 'download' && (
-        <ModalWrapper>
-          <h2 className="text-lg font-bold mb-2">Download Patient Records</h2>
-          <ul className="text-sm list-disc pl-4">
-            {healthRecords.map((r) => (
-              <li key={r.id}>
-                {r.title} - {r.provider} - ${r.value.toFixed(2)}
-              </li>
-            ))}
-          </ul>
-        </ModalWrapper>
-      )}
+      {modal && <div className="modal-backdrop" onClick={handleClose}></div>}
+{modal === 'request' && (
+  <div className="modal">
+    <div className="modal-box">
+      <button className="modal-close" onClick={handleClose}><X /></button>
+      <h2 className="text-lg font-bold mb-4">New Data Request</h2>
+      <form className="space-y-3" onSubmit={handleAddRequest}>
+        <div>
+          <label className="text-sm font-medium">Requester Name</label>
+          <input
+            type="text"
+            className="input"
+            value={formData.requesterName}
+            onChange={(e) => setFormData({ ...formData, requesterName: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Requester Type</label>
+          <select
+            className="input"
+            value={formData.requesterType}
+            onChange={(e) => setFormData({ ...formData, requesterType: e.target.value })}
+            required
+          >
+            <option value="">Select Type</option>
+            <option value="provider">Provider</option>
+            <option value="researcher">Researcher</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Data Type</label>
+          <input
+            type="text"
+            className="input"
+            value={formData.dataType}
+            onChange={(e) => setFormData({ ...formData, dataType: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Purpose</label>
+          <input
+            type="text"
+            className="input"
+            value={formData.purpose}
+            onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Compensation ($)</label>
+          <input
+            type="number"
+            className="input"
+            value={formData.compensation}
+            onChange={(e) => setFormData({ ...formData, compensation: e.target.value })}
+            required
+          />
+        </div>
+        <button type="submit" className="submit-btn">📩 Send Data Request</button>
+      </form>
+    </div>
+  </div>
+)}
 
-      {modal === 'request' && (
-        <ModalWrapper>
-          <h2 className="text-lg font-bold mb-2">New Data Request</h2>
-          <form className="space-y-3">
-            <input type="text" placeholder="Data Type" className="input" />
-            <input type="text" placeholder="Purpose" className="input" />
-            <input type="number" placeholder="Compensation $" className="input" />
-            <button type="submit" className="submit-btn">Send Request</button>
-          </form>
-        </ModalWrapper>
-      )}
+
 
       {modal === 'search' && (
         <ModalWrapper>
@@ -259,6 +339,7 @@ const dataAccess = patientData.length;
           <p className="text-sm text-gray-600 mt-2">Filtering is mock-only for now.</p>
         </ModalWrapper>
       )}
+      
     </div>
   );
 };
