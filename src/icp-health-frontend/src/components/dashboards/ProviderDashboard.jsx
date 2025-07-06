@@ -16,8 +16,9 @@ const canisterId = import.meta.env.VITE_CANISTER_ID_ICP_HEALTH_BACKEND;
 const ProviderDashboard = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [dataRequests, setDataRequests] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
 
-  const sentRequests = dataRequests.filter(req => req.requesterName === currentUserName);  // ✅ Now safe
+ 
   const [receivedRequests, setReceivedRequests] = useState([]);
   const [lastLogin, setLastLogin] = useState('Unknown');
   const [uploads, setUploads] = useState([]);
@@ -84,21 +85,38 @@ const toggleRecipient = (email) => {
   }, []);
 
 useEffect(() => {
-    const fetchRequests = async () => {
-      const authClient = await AuthClient.create();
-      const identity = await authClient.getIdentity();
-      const agent = new HttpAgent({ identity });
-      if (window.location.hostname === 'localhost') {
-        await agent.fetchRootKey();
-      }
-      const actor = createActor(canisterId, { agent });
+  const fetchRequests = async () => {
+    const authClient = await AuthClient.create();
+    const identity = await authClient.getIdentity();
+    const agent = new HttpAgent({ identity });
 
-      const user = await actor.get_user();
-      const response = await actor.get_data_requests_by_email(user.email);
-      setReceivedRequests(response);
-    };
-    fetchRequests();
-  }, []);
+    if (window.location.hostname === 'localhost') {
+      await agent.fetchRootKey();
+    }
+
+    const actor = createActor(canisterId, { agent });
+
+    const user = await actor.get_user();
+    const all = await actor.get_data_requests_by_email(user.email);
+    console.log("All Requests Returned:", all);
+
+    const received = all.filter(req => req.recipients.includes(user.email));
+
+    // Load sent requests from localStorage
+    const storedSent = JSON.parse(localStorage.getItem("sentRequests") || "[]");
+    const sent = storedSent.filter(req => req.requester_email === user.email);
+    console.log("Sent Requests:", sent);
+
+    setDataRequests(all);
+    setReceivedRequests(received);
+    setSentRequests(sent);
+    setCurrentUser(user);
+  };
+
+  fetchRequests();
+}, []);
+
+
 
 
 
@@ -190,49 +208,57 @@ useEffect(() => {
   };
 
  const handleAddRequest = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const authClient = await AuthClient.create();
-      const identity = await authClient.getIdentity();
-      const agent = new HttpAgent({ identity });
+  try {
+    const authClient = await AuthClient.create();
+    const identity = await authClient.getIdentity();
+    const agent = new HttpAgent({ identity });
 
-      if (window.location.hostname === 'localhost') {
-        await agent.fetchRootKey();
-      }
-
-      const actor = createActor(canisterId, { agent });
-
-      const request = {
-        id: Date.now().toString(),
-        requester_name: currentUser?.name,
-        requester_email: currentUser?.email,
-        recipients: formData.recipients,
-        data_type: formData.dataType,
-        purpose: formData.purpose,
-        message: formData.message || '',
-        compensation: formData.compensation.toString(),
-        status: "pending",
-        date: new Date().toISOString(),
-      };
-
-      await actor.submit_data_request(request);
-
-      alert("Request sent successfully!");
-      setFormData({
-        requesterName: '',
-        recipients: [],
-        dataType: '',
-        purpose: '',
-        message: '',
-        compensation: ''
-      });
-      setModal(null);
-    } catch (error) {
-      console.error("Error submitting data request:", error);
-      alert("An unexpected error occurred.");
+    if (window.location.hostname === 'localhost') {
+      await agent.fetchRootKey();
     }
-  };
+
+    const actor = createActor(canisterId, { agent });
+
+    const request = {
+      id: Date.now().toString(),
+      requester_name: currentUser?.name,
+      requester_email: currentUser?.email,
+      recipients: formData.recipients,
+      data_type: formData.dataType,
+      purpose: formData.purpose,
+      message: formData.message || '',
+      compensation: formData.compensation.toString(),
+      status: "pending",
+      date: new Date().toISOString(),
+    };
+
+    await actor.submit_data_request(request);
+
+    alert("Request sent successfully!");
+    console.log("Submitted request:", request);
+    const existing = JSON.parse(localStorage.getItem("sentRequests") || "[]");
+    localStorage.setItem("sentRequests", JSON.stringify([...existing, request]));
+
+    // ✅ Add to sentRequests immediately for frontend display
+    setSentRequests(prev => [...prev, request]);
+
+    setFormData({
+      requesterName: '',
+      recipients: [],
+      dataType: '',
+      purpose: '',
+      message: '',
+      compensation: ''
+    });
+    setModal(null);
+  } catch (error) {
+    console.error("Error submitting data request:", error);
+    alert("An unexpected error occurred.");
+  }
+};
+
 
   const patientData = uploads.map((doc, index) => ({
     id: index,
@@ -342,6 +368,27 @@ const ModalWrapper = React.memo(({ children }) => (
             <h3 className="text-lg font-semibold text-gray-900">Data Requests</h3>
             <button className="text-green-600 hover:text-green-800 text-sm font-medium" onClick={() => setModal('request')}>New Request</button>
           </div>
+          <h4 className="text-sm font-semibold text-gray-700 mb-2 mt-4">Sent Requests</h4>
+{sentRequests.length > 0 ? (
+  sentRequests.map((req, index) => (
+    <div key={index} className="border border-gray-100 rounded-lg p-4 mb-4">
+      <div className="flex items-start justify-between mb-2">
+        <h4 className="font-medium text-gray-900">{req.data_type}</h4>
+        <span className={`badge ${req.status === 'pending' ? 'yellow' : 'green'}`}>{req.status}</span>
+      </div>
+      <p className="text-sm text-gray-600 mb-2">
+        To: {req.recipients.join(', ')} - {req.purpose}
+      </p>
+      <div className="flex justify-between items-center text-xs text-gray-500">
+        <span>Requested on {req.date}</span>
+        <span className="text-green-600 font-medium">{req.compensation} tokens</span>
+      </div>
+    </div>
+  ))
+) : (
+  <p className="text-sm text-gray-500 italic">No sent requests.</p>
+)}
+
 
           <h4 className="text-sm font-semibold text-gray-700 mb-2">Received Requests</h4>
   {receivedRequests.length > 0 ? (
