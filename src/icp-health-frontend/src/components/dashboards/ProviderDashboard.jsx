@@ -238,9 +238,11 @@ useEffect(() => {
     const byteArray = Uint8Array.from(atob(matched.file_content), c => c.charCodeAt(0));
     const blob = new Blob([byteArray]);
     const date = new Date(Number(matched.timestamp));
-    const name = matched.file_name.replace(/\.[^/.]+$/, '');
-    const ext = matched.file_name.includes('.') ? '' : '.txt';
-    const finalName = `${name}_${date.toISOString().replace(/[:T]/g, '-').split('.')[0]}${ext}`;
+    const fileNameParts = matched.file_name.split('.');
+const name = fileNameParts.slice(0, -1).join('.') || 'file';
+const ext = fileNameParts.length > 1 ? '.' + fileNameParts.pop() : '';
+const finalName = `${name}_${date.toISOString().replace(/[:T]/g, '-').split('.')[0]}${ext}`;
+
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = finalName;
@@ -339,12 +341,12 @@ const ModalWrapper = React.memo(({ children }) => (
             <p className="opacity-90">Access patient data securely with proper consent and compensation.</p>
           </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" style={{ justifyContent: 'space-evenly' }}>
-        <StatCard title="Active Patients" value={patients} icon={Users} color="green" />
-        <StatCard title="Data Access Granted" value={dataAccess} icon={FileText} color="blue" />
-        <StatCard title="Pending Requests" value={pendingRequests} icon={Clock} color="yellow" />
-        <StatCard title="Recent Activity" value={lastLogin || "Unknown"} icon={Activity} color="purple" />
-      </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" style={{ justifyContent: 'space-evenly' }}>
+  <StatCard title="Active Patients" value={patients} icon={Users} color="green" titleClass="text-sm" />
+  <StatCard title="Data Access Granted" value={dataAccess} icon={FileText} color="blue" titleClass="text-sm" />
+  <StatCard title="Pending Requests" value={pendingRequests} icon={Clock} color="yellow" titleClass="text-sm" />
+  <StatCard title="Recent Activity" value={lastLogin || "Unknown"} icon={Activity} color="purple" titleClass="text-sm" />
+</div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Patient Table */}
@@ -412,20 +414,21 @@ const ModalWrapper = React.memo(({ children }) => (
           <h4 className="text-sm font-semibold text-gray-700 mb-2 mt-4">Sent Requests</h4>
 {sentRequests.length > 0 ? (
   sentRequests.map((req, index) => (
-    <div key={index} className="border border-gray-100 rounded-lg p-4 mb-4">
-      <div className="flex items-start justify-between mb-2">
-        <h4 className="font-medium text-gray-900">{req.data_type}</h4>
-        <span className={`badge ${req.status === 'pending' ? 'yellow' : 'green'}`}>{req.status}</span>
+    <React.Fragment key={index}>
+      <div className="border border-gray-100 rounded-lg p-4 mb-4">
+        <div className="flex items-start justify-between mb-2">
+          <h4 className="font-medium text-gray-900">{req.data_type}</h4>
+          <span className={`badge ${req.status === 'pending' ? 'yellow' : 'green'}`}>{req.status}</span>
+        </div>
+        <p className="text-sm text-gray-600 mb-2">
+          To: {req.recipients.join(', ')} - {req.purpose}
+        </p>
+        <div className="flex justify-between items-center text-xs text-gray-500">
+          <span>Requested on {req.date}</span>
+          <span className="text-green-600 font-medium">{req.compensation} tokens</span>
+        </div>
       </div>
-      <p className="text-sm text-gray-600 mb-2">
-        To: {req.recipients.join(', ')} - {req.purpose}
-      </p>
-      <div className="flex justify-between items-center text-xs text-gray-500">
-        <span>Requested on {req.date}</span>
-        <span className="text-green-600 font-medium">{req.compensation} tokens</span>
-      </div>
-     
-    </div>
+    </React.Fragment>
   ))
 ) : (
   <p className="text-sm text-gray-500 italic">No sent requests.</p>
@@ -435,36 +438,36 @@ const ModalWrapper = React.memo(({ children }) => (
           <h4 className="text-sm font-semibold text-gray-700 mb-2">Received Requests</h4>
   {receivedRequests.length > 0 ? (
     receivedRequests.map((req,index) => (
-      <div key={index} className="border border-gray-100 rounded-lg p-4 mb-4">
-        <div className="flex items-start justify-between mb-2">
-          <h4 className="font-medium text-gray-900">{req.dataType}</h4>
-          <span className={`badge ${req.status === 'pending' ? 'yellow' : 'green'}`}>{req.status}</span>
-        </div>
-        <p className="text-sm text-gray-600 mb-2">
-          From: {req.requester_name} - {req.purpose}
-        </p>
-        <div className="flex justify-between items-center text-xs text-gray-500">
-          <span>Requested on {req.date}</span>
-          <span className="text-green-600 font-medium">{req.compensation} tokens</span>
-        </div>
+  <div key={index} className="border border-gray-100 rounded-lg p-4 mb-4">
+    <div className="flex items-start justify-between mb-2">
+      <h4 className="font-medium text-gray-900">{req.dataType}</h4>
+      <span className={`badge ${req.status === 'pending' ? 'yellow' : 'green'}`}>{req.status}</span>
+    </div>
+    <p className="text-sm text-gray-600 mb-2">
+      From: {req.requester_name} - {req.purpose}
+    </p>
+    <div className="flex justify-between items-center text-xs text-gray-500">
+      <span>Requested on {req.date}</span>
+      <span className="text-green-600 font-medium">{req.compensation} tokens</span>
+    </div>
 
-        {req.status === 'pending' && (
-          <div className="flex gap-2 mt-2">
-    <button
-      onClick={() => updateRequestStatus(req.id, "accepted")}
-      className="px-3 py-1 bg-green-600 text-white rounded-md"
-    >
-      Accept
-    </button>
-    <button
-      onClick={() => updateRequestStatus(req.id, "declined")}
-      className="px-3 py-1 bg-red-600 text-white rounded-md"
-    >
-      Decline
-    </button>
-  </div>
-        )}
+    {req.status === 'pending' && (
+      <div className="flex gap-2 mt-2">
+        <button
+          onClick={() => updateRequestStatus(req.id, "accepted")}
+          className="px-3 py-1 bg-green-600 text-white rounded-md"
+        >
+          Accept
+        </button>
+        <button
+          onClick={() => updateRequestStatus(req.id, "declined")}
+          className="px-3 py-1 bg-red-600 text-white rounded-md"
+        >
+          Decline
+        </button>
       </div>
+    )}
+  </div>
     ))
   ) : (
     <p className="text-sm text-gray-500 italic">No received requests.</p>
