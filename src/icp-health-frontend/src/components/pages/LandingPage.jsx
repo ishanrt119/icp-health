@@ -194,8 +194,8 @@ const Landing = ({ onLoginClick, onDemoLogin }) => {
           <div className="features-grid">
             <div className="feature-item">
               <FileText size={48} className="feature-icon" style={{ color: '#3b82f6' }} />
-              <h3 className="feature-title">Zero-Knowledge Security</h3>
-              <p className="feature-description">
+              <h3 className="feature-title" style={{ color: 'black' }}>Zero-Knowledge Security</h3>
+              <p className="feature-description" style={{ color: 'black' }}>
                 Your data is encrypted with military-grade security. Even we can't access your personal information.
               </p>
               <span className="feature-link">Learn more →</span>
@@ -203,8 +203,8 @@ const Landing = ({ onLoginClick, onDemoLogin }) => {
             
             <div className="feature-item">
               <Calendar size={48} className="feature-icon" style={{ color: '#10b981' }} />
-              <h3 className="feature-title">Blockchain Verified</h3>
-              <p className="feature-description">
+              <h3 className="feature-title" style={{ color: 'black' }}>Blockchain Verified</h3>
+              <p className="feature-description" style={{ color: 'black' }}>
                 Every record is immutably stored on the Internet Computer, ensuring authenticity and preventing tampering.
               </p>
               <span className="feature-link">Learn more →</span>
@@ -212,8 +212,8 @@ const Landing = ({ onLoginClick, onDemoLogin }) => {
             
             <div className="feature-item">
               <Activity size={48} className="feature-icon" style={{ color: '#f59e0b' }} />
-              <h3 className="feature-title">Earn While You Share</h3>
-              <p className="feature-description">
+              <h3 className="feature-title" style={{ color: 'black' }}>Earn While You Share</h3>
+              <p className="feature-description" style={{ color: 'black' }}>
                 Monetize your anonymized health data by contributing to medical research and pharmaceutical studies.
               </p>
               <span className="feature-link">Learn more →</span>
@@ -221,8 +221,8 @@ const Landing = ({ onLoginClick, onDemoLogin }) => {
             
             <div className="feature-item">
               <Users size={48} className="feature-icon" style={{ color: '#8b5cf6' }} />
-              <h3 className="feature-title">Global Accessibility</h3>
-              <p className="feature-description">
+              <h3 className="feature-title" style={{ color: 'black' }}>Global Accessibility</h3>
+              <p className="feature-description" style={{ color: 'black' }}>
                 Access your health records from anywhere in the world, share with any healthcare provider instantly.
               </p>
               <span className="feature-link">Learn more →</span>
@@ -230,8 +230,8 @@ const Landing = ({ onLoginClick, onDemoLogin }) => {
             
             <div className="feature-item">
               <Brain size={48} className="feature-icon" style={{ color: '#ef4444' }} />
-              <h3 className="feature-title">AI-Powered Insights</h3>
-              <p className="feature-description">
+              <h3 className="feature-title" style={{ color: 'black' }}>AI-Powered Insights</h3>
+              <p className="feature-description" style={{ color: 'black' }}>
                 Get personalized health insights and recommendations powered by advanced machine learning algorithms.
               </p>
               <span className="feature-link">Learn more →</span>
@@ -239,8 +239,8 @@ const Landing = ({ onLoginClick, onDemoLogin }) => {
             
             <div className="feature-item">
               <Shield size={48} className="feature-icon" style={{ color: '#059669' }} />
-              <h3 className="feature-title">Provider Integration</h3>
-              <p className="feature-description">
+              <h3 className="feature-title" style={{ color: 'black' }}>Provider Integration</h3>
+              <p className="feature-description" style={{ color: 'black' }}>
                 Seamlessly connect with hospitals, clinics, and healthcare providers for instant record sharing.
               </p>
               <span className="feature-link">Learn more →</span>

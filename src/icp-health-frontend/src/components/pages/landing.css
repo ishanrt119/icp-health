@@ -611,13 +611,13 @@
 }
 
 .card-title {
-  color: rgba(255, 255, 255, 0.8);
+  color: black(255, 255, 255, 0.8);
   font-size: var(--text-sm);
   margin-bottom: var(--space-1);
 }
 
 .card-value {
-  color: white;
+  color: black;
   font-size: var(--text-lg);
   font-weight: var(--font-weight-bold);
 }
