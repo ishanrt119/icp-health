@@ -131,7 +131,10 @@ useEffect(() => {
     fetchUsers();
   }, []);
 
-  const pendingRequests = dataRequests.filter(r => r.status === 'pending').length;
+  const pendingRequests =
+  sentRequests.filter(r => r.status === 'pending').length +
+  receivedRequests.filter(r => r.status === 'pending').length;
+
 
     useEffect(() => {
     const stored = localStorage.getItem('lastLogin');
